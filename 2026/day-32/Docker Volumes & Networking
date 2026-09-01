@@ -1,0 +1,1113 @@
+# Day 32 – Docker Volumes & Networking
+
+## Overview
+
+Today's practice focused on two important Docker concepts:
+
+* **Docker Volumes** – persistent data storage
+* **Docker Networking** – communication between containers
+
+### Main Goal
+
+The goal was to understand:
+
+1. What happens to data when a container is removed.
+2. How Docker volumes provide persistent storage.
+3. The difference between named volumes and bind mounts.
+4. How containers communicate using Docker networks.
+5. Why user-defined bridge networks are preferred for container-to-container communication.
+6. How volumes and networking work together in a real-world application.
+
+---
+
+# Task 1 – Container Data Persistence
+
+## 1. Start a MySQL Container
+
+I started a MySQL 5.7 container with a root password:
+
+```bash
+docker run -d -e MYSQL_ROOT_PASSWORD=root mysql:5.7
+```
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+Access the MySQL container:
+
+```bash
+docker exec -it <container-id> bash
+```
+
+Connect to MySQL:
+
+```bash
+mysql -u root -p
+```
+
+---
+
+## 2. Create a Database
+
+```sql
+SHOW DATABASES;
+
+CREATE DATABASE tws_db;
+
+USE tws_db;
+```
+
+---
+
+## 3. Create a Table
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
+```
+
+---
+
+## 4. Insert Data
+
+```sql
+INSERT INTO users (name, email)
+VALUES ('Aaru', 'aaru@example.com');
+```
+
+Verify the data:
+
+```sql
+SELECT * FROM users;
+```
+
+Example output:
+
+```text
++----+------+-------------------+
+| id | name | email             |
++----+------+-------------------+
+|  1 | Aaru | aaru@example.com  |
++----+------+-------------------+
+```
+
+---
+
+## 5. Remove the Container
+
+```bash
+docker stop <container-id>
+docker rm <container-id>
+```
+
+Then I started a completely new MySQL container:
+
+```bash
+docker run -d -e MYSQL_ROOT_PASSWORD=root mysql:5.7
+```
+
+After connecting to the new container:
+
+```sql
+SHOW DATABASES;
+```
+
+The previously created `tws_db` database was no longer present.
+
+### Observation
+
+The database data was stored in the container's writable layer.
+
+When the container was removed, the data stored only in that writable layer was removed as well.
+
+### Key Learning
+
+> **Containers are ephemeral by default.**
+
+For databases and other stateful applications, persistent storage must be used.
+
+```text
+Container
+    |
+    | writable layer
+    v
+Database Data
+
+Container removed
+        ↓
+Writable layer removed
+        ↓
+Database data lost
+```
+
+---
+
+# Task 2 – Named Volumes
+
+## 1. Create a Named Volume
+
+```bash
+docker volume create mysql-testing
+```
+
+List Docker volumes:
+
+```bash
+docker volume ls
+```
+
+Inspect the volume:
+
+```bash
+docker volume inspect mysql-testing
+```
+
+---
+
+## 2. Run MySQL with the Named Volume
+
+```bash
+docker run -d \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -v mysql-testing:/var/lib/mysql \
+  mysql:5.7
+```
+
+The volume is mounted at MySQL's data directory:
+
+```text
+mysql-testing
+       |
+       v
+/var/lib/mysql
+```
+
+---
+
+## 3. Create Database and Data
+
+Access the container:
+
+```bash
+docker exec -it <container-id> bash
+```
+
+Connect to MySQL:
+
+```bash
+mysql -u root -p
+```
+
+Create the database:
+
+```sql
+CREATE DATABASE mydb;
+
+USE mydb;
+```
+
+Create the table:
+
+```sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
+```
+
+Insert data:
+
+```sql
+INSERT INTO users (name, email)
+VALUES ('Aaru', 'aaru@example.com');
+```
+
+Verify:
+
+```sql
+SELECT * FROM users;
+```
+
+Example output:
+
+```text
++----+------+-------------------+
+| id | name | email             |
++----+------+-------------------+
+|  1 | Aaru | aaru@example.com  |
++----+------+-------------------+
+```
+
+---
+
+## 4. Remove the Container
+
+```bash
+docker stop <container-id>
+docker rm <container-id>
+```
+
+The container was removed, but the named volume remained.
+
+---
+
+## 5. Start a New Container Using the Same Volume
+
+```bash
+docker run -d \
+  -e MYSQL_ROOT_PASSWORD=root \
+  -v mysql-testing:/var/lib/mysql \
+  mysql:5.7
+```
+
+Connect to MySQL:
+
+```bash
+docker exec -it <container-id> bash
+
+mysql -u root -p
+```
+
+Check databases:
+
+```sql
+SHOW DATABASES;
+```
+
+The `mydb` database was still available.
+
+Check the table:
+
+```sql
+USE mydb;
+
+SHOW TABLES;
+```
+
+Verify the data:
+
+```sql
+SELECT * FROM users;
+```
+
+Example output:
+
+```text
++----+------+-------------------+
+| id | name | email             |
++----+------+-------------------+
+|  1 | Aaru | aaru@example.com  |
++----+------+-------------------+
+```
+
+### Observation
+
+The container was removed, but the named volume remained.
+
+When a new MySQL container was started using the same volume, the database and its data were available again.
+
+### Key Learning
+
+A **named volume** is managed by Docker and has a lifecycle independent of the container using it.
+
+```text
+       Container
+           |
+           | mounts
+           v
+   mysql-testing
+       Volume
+           |
+           v
+    /var/lib/mysql
+           |
+           v
+     MySQL Data
+```
+
+Removing the container does **not** remove the named volume.
+
+### Important Commands
+
+```bash
+docker volume create mysql-testing
+docker volume ls
+docker volume inspect mysql-testing
+```
+
+---
+
+# Task 3 – Bind Mounts
+
+## 1. Create a Host Directory
+
+```bash
+mkdir volumes-test
+cd volumes-test
+```
+
+Create the HTML file:
+
+```bash
+vim index.html
+```
+
+Example content:
+
+```html
+<h1>Hello</h1>
+```
+
+Check the directory:
+
+```bash
+ls
+```
+
+Output:
+
+```text
+index.html
+```
+
+Check the absolute path:
+
+```bash
+pwd
+```
+
+Example:
+
+```text
+/Users/aaru/volumes-test
+```
+
+---
+
+## 2. Run Nginx with a Bind Mount
+
+```bash
+docker run -d \
+  -v /Users/aaru/volumes-test:/usr/share/nginx/html \
+  -p 80:80 \
+  nginx
+```
+
+The host directory was mounted directly into Nginx's web directory.
+
+Open:
+
+```text
+http://localhost
+```
+
+The `index.html` file from the host directory is served by Nginx.
+
+---
+
+## 3. Modify the HTML File
+
+Edit the file on the host:
+
+```bash
+vim /Users/aaru/volumes-test/index.html
+```
+
+After saving the changes, refresh the browser.
+
+The updated content is reflected immediately because the host directory is directly mounted into the container.
+
+### Key Learning
+
+A **bind mount** connects a specific file or directory on the host machine directly to a location inside the container.
+
+```text
+Docker Host
+    |
+    | /Users/aaru/volumes-test
+    |
+    v
+Container
+    |
+    | /usr/share/nginx/html
+    v
+Nginx
+```
+
+---
+
+# Named Volume vs Bind Mount
+
+| Feature            | Named Volume                   | Bind Mount                                       |
+| ------------------ | ------------------------------ | ------------------------------------------------ |
+| Managed by         | Docker                         | User/Host                                        |
+| Storage location   | Managed by Docker              | User specifies host path                         |
+| Typical use        | Database/application data      | Source code/configuration                        |
+| Example            | `mysql-testing:/var/lib/mysql` | `/Users/aaru/volumes-test:/usr/share/nginx/html` |
+| Host path required | No                             | Yes                                              |
+
+### Simple Way to Remember
+
+**Named Volume:**
+
+> Docker manages the storage.
+
+**Bind Mount:**
+
+> I choose the host directory.
+
+---
+
+# Task 4 – Docker Networking Basics
+
+## 1. List Docker Networks
+
+```bash
+docker network ls
+```
+
+Example networks:
+
+```text
+NETWORK ID     NAME      DRIVER    SCOPE
+350d2168c4c2   bridge    bridge    local
+e2ef3367c548   host      host      local
+51bc879e334f   kind      bridge    local
+c98e6e72ff42   none      null      local
+```
+
+Important built-in Docker networks include:
+
+* `bridge`
+* `host`
+* `none`
+
+---
+
+## 2. Inspect the Default Bridge Network
+
+```bash
+docker inspect bridge
+```
+
+The default bridge network used the subnet:
+
+```text
+172.17.0.0/16
+```
+
+Containers connected to the bridge network receive IP addresses from this network.
+
+---
+
+# Task 4A – Run Containers on the Default Bridge
+
+Two containers were started on the default bridge network.
+
+## Nginx Container
+
+```bash
+docker run -d \
+  -v /Users/aaru/volumes-test:/usr/share/nginx/html \
+  --name first-cont \
+  -p 80:80 \
+  nginx
+```
+
+## MySQL Container
+
+```bash
+docker run -d \
+  -p 3306:3306 \
+  --name sec-cont \
+  -e MYSQL_ROOT_PASSWORD=ROOT \
+  mysql:5.7
+```
+
+Both containers were running on Docker's default `bridge` network.
+
+---
+
+## Name-Based Communication
+
+The default bridge network does not provide the same automatic container-name DNS resolution available on a user-defined bridge network.
+
+Therefore, relying on:
+
+```text
+sec-cont
+```
+
+for automatic DNS resolution is not the same as using a user-defined bridge network.
+
+---
+
+## IP-Based Communication
+
+Containers on the default bridge network receive IP addresses from the bridge subnet:
+
+```text
+172.17.0.0/16
+```
+
+Container-to-container communication can therefore be performed using the container IP address.
+
+### Important Observation
+
+Hard-coding container IP addresses is not ideal because container IP addresses can change.
+
+This is one of the reasons user-defined networks are preferred for application architectures.
+
+---
+
+# Task 5 – Custom Docker Network
+
+## 1. Create a Custom Network
+
+```bash
+docker network create test
+```
+
+Verify:
+
+```bash
+docker network ls
+```
+
+The custom network appears as:
+
+```text
+test    bridge    local
+```
+
+---
+
+## 2. Run Containers on the Custom Network
+
+### Nginx
+
+```bash
+docker run -d \
+  -v /Users/aaru/volumes-test:/usr/share/nginx/html \
+  --name first-cont \
+  -p 80:80 \
+  --network=test \
+  nginx
+```
+
+### MySQL
+
+```bash
+docker run -d \
+  -p 3306:3306 \
+  --name sec-cont \
+  -e MYSQL_ROOT_PASSWORD=ROOT \
+  --network=test \
+  mysql:5.7
+```
+
+---
+
+## 3. Inspect the Custom Network
+
+```bash
+docker inspect test
+```
+
+The network assigned IP addresses to the containers.
+
+Example:
+
+```text
+first-cont → 172.19.0.2
+sec-cont   → 172.19.0.3
+```
+
+---
+
+## 4. Container Name Resolution
+
+On a **user-defined bridge network**, Docker provides automatic DNS-based name resolution.
+
+Therefore, containers connected to the same custom network can communicate using container names.
+
+For example:
+
+```text
+sec-cont
+```
+
+resolves to the MySQL container within the `test` network.
+
+The application can connect using:
+
+```text
+sec-cont:3306
+```
+
+instead of using a hard-coded IP address.
+
+---
+
+# Why Custom Networks Are Better
+
+User-defined bridge networks provide:
+
+* Automatic DNS resolution
+* Container-name based communication
+* Network isolation
+* Easier application configuration
+* Better separation between applications
+
+### Example
+
+Instead of:
+
+```text
+172.19.0.3:3306
+```
+
+the application can use:
+
+```text
+sec-cont:3306
+```
+
+If the MySQL container is recreated and receives a different IP address, the application can continue using the container name.
+
+---
+
+# Task 6 – Combining Volumes and Networking
+
+This practice combined the two major Docker concepts:
+
+```text
+                    Docker Host
+                         |
+          +--------------+--------------+
+          |                             |
+    MySQL Container              Application Container
+          |                             |
+          |                             |
+          v                             |
+   mysql-testing                        |
+       Volume                           |
+          |                             |
+          +-------------+---------------+
+                        |
+                   test network
+```
+
+---
+
+## Database Container
+
+The MySQL container can use both a custom network and a named volume:
+
+```bash
+docker run -d \
+  --name mysql-db \
+  -e MYSQL_ROOT_PASSWORD=ROOT \
+  -v mysql-testing:/var/lib/mysql \
+  --network=test \
+  mysql:5.7
+```
+
+Here:
+
+* `--name mysql-db` → gives the container a stable name for network communication
+* `-v mysql-testing:/var/lib/mysql` → provides persistent MySQL storage
+* `--network=test` → connects the container to the custom network
+
+---
+
+## Application Container
+
+An application container can be connected to the same network:
+
+```bash
+docker run -d \
+  --name app \
+  --network=test \
+  nginx
+```
+
+The application can communicate with MySQL using:
+
+```text
+mysql-db:3306
+```
+
+There is no need to hard-code the database container's IP address.
+
+---
+
+# Important Concepts Learned
+
+## 1. Container Storage
+
+Without a volume:
+
+```text
+Container
+    |
+    v
+Writable Layer
+    |
+    v
+Database Data
+
+Container removed
+        ↓
+Writable Layer removed
+        ↓
+Data lost
+```
+
+---
+
+## 2. Named Volume
+
+With a named volume:
+
+```text
+Container
+    |
+    v
+Named Volume
+    |
+    v
+Database Data
+```
+
+The volume survives container removal.
+
+---
+
+## 3. Bind Mount
+
+```text
+Host Directory
+      |
+      v
+Container Directory
+```
+
+Changes made on the host can immediately be reflected inside the container.
+
+---
+
+## 4. Default Bridge Network
+
+The default bridge network provides container networking, but it does not provide the same automatic container-name DNS behavior as a user-defined bridge network.
+
+---
+
+## 5. Custom Bridge Network
+
+A user-defined bridge network provides container-name based communication:
+
+```text
+Container A
+     |
+     | DNS
+     v
+Container B
+```
+
+This makes application-to-database communication easier and more reliable.
+
+---
+
+# Useful Docker Commands
+
+## Containers
+
+```bash
+docker ps
+docker run
+docker stop
+docker rm
+docker exec
+```
+
+## Volumes
+
+```bash
+docker volume create <volume-name>
+docker volume ls
+docker volume inspect <volume-name>
+```
+
+## Networks
+
+```bash
+docker network ls
+docker network create <network-name>
+docker network inspect <network-name>
+```
+
+## Named Volume
+
+```bash
+docker run -v volume_name:/container/path image
+```
+
+## Bind Mount
+
+```bash
+docker run -v /host/path:/container/path image
+```
+
+## Custom Network
+
+```bash
+docker run --network=<network-name> image
+```
+
+---
+
+# Real-World DevOps Connection
+
+Day 32 connects directly to real-world containerized application architecture.
+
+A typical application may have:
+
+```text
+                Application
+                     |
+                     | test network
+                     |
+              +------+------+
+              |             |
+              v             v
+          App Container   MySQL
+                             |
+                             |
+                             v
+                       Persistent Volume
+```
+
+### If the application container is recreated:
+
+The application container can be replaced without losing database data.
+
+### If the database container is recreated:
+
+The database can reconnect to the same persistent volume.
+
+### If the database IP changes:
+
+The application can still connect using:
+
+```text
+mysql-db:3306
+```
+
+because the application uses the container/service name rather than a hard-coded IP.
+
+This demonstrates an important DevOps principle:
+
+> **Separate application lifecycle from data lifecycle.**
+
+---
+
+# Troubleshooting Connection
+
+If an application cannot connect to MySQL, a practical troubleshooting flow is:
+
+```text
+1. Check containers
+       ↓
+docker ps
+
+2. Check networks
+       ↓
+docker network ls
+
+3. Inspect network
+       ↓
+docker network inspect test
+
+4. Verify both containers are connected
+       ↓
+first-cont / mysql-db
+
+5. Test name resolution
+       ↓
+mysql-db
+
+6. Verify MySQL port
+       ↓
+3306
+
+7. Check MySQL logs
+       ↓
+docker logs mysql-db
+```
+
+This is useful in real DevOps troubleshooting because connectivity problems can occur due to:
+
+* Container not running
+* Wrong network
+* Container not attached to the expected network
+* Incorrect database hostname
+* Incorrect database port
+* MySQL startup failure
+* Application configuration issue
+
+---
+
+# Interview Readiness
+
+## Q1. What happens to data when a Docker container is removed?
+
+Data stored only in the container's writable layer is removed along with the container.
+
+For persistent data, Docker volumes or other external storage should be used.
+
+---
+
+## Q2. Why are Docker volumes used?
+
+Docker volumes provide persistent storage that exists independently of the container lifecycle.
+
+They are commonly used for stateful applications such as databases.
+
+---
+
+## Q3. What is the difference between a named volume and a bind mount?
+
+**Named volume:**
+
+Docker manages the storage location.
+
+```bash
+-v mysql-testing:/var/lib/mysql
+```
+
+**Bind mount:**
+
+The user specifies the host path.
+
+```bash
+-v /Users/aaru/volumes-test:/usr/share/nginx/html
+```
+
+---
+
+## Q4. Why should we avoid using container IP addresses?
+
+Container IP addresses can change when containers are recreated.
+
+Using a container/service name provides a more stable way for applications to communicate.
+
+---
+
+## Q5. What is the advantage of a user-defined bridge network?
+
+It provides features such as automatic DNS-based container-name resolution and network isolation.
+
+For example:
+
+```text
+app → mysql-db:3306
+```
+
+---
+
+## Q6. Can removing a container remove a named volume?
+
+Not normally.
+
+Removing the container does not automatically remove a separately created named volume.
+
+The volume must be explicitly removed when it is no longer required.
+
+---
+
+# Day 32 – Key Takeaways
+
+* Containers are **ephemeral by default**.
+* Data stored only in the container writable layer is lost when the container is removed.
+* **Named volumes** provide persistent storage.
+* Named volumes are especially useful for databases.
+* **Bind mounts** connect host directories directly to containers.
+* Docker provides default networks such as `bridge`, `host`, and `none`.
+* The default bridge network does not provide the same automatic name-based DNS behavior as user-defined bridge networks.
+* **Custom bridge networks** provide automatic container-name resolution.
+* Containers on the same custom network can communicate using container names.
+* Container names are preferred over hard-coded IP addresses because IP addresses can change.
+* Volumes provide **persistent data**.
+* Networks provide **container-to-container communication**.
+* Together, volumes and networks form an important foundation for real-world containerized applications.
+
+---
+
+# Practical Summary
+
+The complete Day 32 learning flow was:
+
+```text
+                         Docker
+                            |
+             +--------------+--------------+
+             |                             |
+          Volumes                      Networking
+             |                             |
+       +-----+-----+                  +----+----+
+       |           |                  |         |
+    Named        Bind             Default    Custom
+    Volume       Mount             Bridge    Network
+       |           |                            |
+       v           v                            v
+   Database      Nginx                   DNS / Name-based
+     Data        Files                   Communication
+```
+
+### Final Understanding
+
+The practical exercise demonstrated two essential Docker concepts:
+
+**Persistent Storage**
+
+```text
+Container → Volume → Persistent Data
+```
+
+**Container Communication**
+
+```text
+Container A → Custom Network → Container B
+```
+
+Together:
+
+```text
+          Application
+               |
+               | mysql-db:3306
+               v
+          MySQL Container
+               |
+               v
+       mysql-testing Volume
+               |
+               v
+        Persistent Database
+```
+
+### Day 32 Achievement
+
+> **I learned how to make Docker applications persistent using volumes and how to make containers communicate reliably using custom Docker networks.**
+
+This version keeps your **hands-on learning intact** while making the notes suitable for your ongoing **DevOps learning journal and interview revision**.
+
+
