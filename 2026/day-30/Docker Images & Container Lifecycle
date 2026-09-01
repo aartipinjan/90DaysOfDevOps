@@ -1,0 +1,100 @@
+# Day 30 – Docker Images & Container Lifecycle
+
+## Task
+
+Today's goal was to understand how Docker images and containers work, including:
+
+1. **What is it?** — 
+2. **Why do we need it?** — practical purpose
+3. **How does it work?** — concept/flow
+4. **Important commands** — command + meaning
+5. **Real-time scenario** — how a DevOps engineer uses it
+6. **Troubleshooting points** — what to check when something fails
+7. **Interview questions** — beginner → experienced level
+8. **My own understanding** — short paragraph you can explain in an interview
+9. **Quick revision** — 5–10 lines to remember
+
+For example, 
+
+### Docker Image vs Container
+
+**Docker Image:**
+A Docker image is a **read-only template** containing the application, dependencies, libraries and required filesystem content.
+
+**Container:**
+A container is a **runtime instance created from an image**. It can be running, stopped, paused or removed.
+
+Your notes already capture the key relationship:
+
+```text
+Docker Image
+     ↓
+  Container
+```
+
+Multiple containers can be created from the same image. 
+
+### Interview explanation
+
+> "A Docker image is a reusable, read-only template, while a container is an instance of that image running as a process. The same image can be used to create multiple containers."
+
+### Commands to remember
+
+```bash
+docker images
+docker ps
+docker ps -a
+
+docker run -d --name nginx-container nginx
+
+docker stop <container>
+docker start <container>
+docker restart <container>
+docker pause <container>
+docker unpause <container>
+docker kill <container>
+docker rm <container>
+```
+
+These are the lifecycle commands  practiced. 
+
+### The most important thing
+
+```text
+Image
+  ↓
+docker run
+  ↓
+Container Created
+  ↓
+Running
+  ↓
+Pause / Unpause
+  ↓
+Stop
+  ↓
+Start / Restart
+  ↓
+Kill
+  ↓
+Remove
+```
+
+for example:
+
+> "Application is down inside a Docker container. What will you check?"
+
+
+```text
+1. docker ps
+2. docker ps -a
+3. docker logs <container>
+4. docker inspect <container>
+5. docker exec -it <container> bash
+6. Check process/service
+7. Check ports
+8. Check network
+9. Check resource usage
+10. Restart only after understanding the issue
+```
+
