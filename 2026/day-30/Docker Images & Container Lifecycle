@@ -1,52 +1,848 @@
 # Day 30 – Docker Images & Container Lifecycle
 
-## Task
+## 🎯 Objective
 
 Today's goal was to understand how Docker images and containers work, including:
 
-1. **What is it?** — 
-2. **Why do we need it?** — practical purpose
-3. **How does it work?** — concept/flow
-4. **Important commands** — command + meaning
-5. **Real-time scenario** — how a DevOps engineer uses it
-6. **Troubleshooting points** — what to check when something fails
-7. **Interview questions** — beginner → experienced level
-8. **My own understanding** — short paragraph you can explain in an interview
-9. **Quick revision** — 5–10 lines to remember
+* The relationship between images and containers
+* Docker image sizes and layers
+* Image history and caching
+* The complete container lifecycle
+* Working with running containers
+* Container inspection and networking
+* Docker cleanup and disk usage
 
-For example, 
+---
 
-### Docker Image vs Container
+# 1. Docker Images
 
-**Docker Image:**
-A Docker image is a **read-only template** containing the application, dependencies, libraries and required filesystem content.
+## Pull Docker Images
 
-**Container:**
-A container is a **runtime instance created from an image**. It can be running, stopped, paused or removed.
+I pulled the following images from Docker Hub:
 
-Your notes already capture the key relationship:
+### Nginx
 
-```text
-Docker Image
-     ↓
-  Container
+```bash
+docker pull nginx
 ```
 
-Multiple containers can be created from the same image. 
+The `nginx:latest` image was successfully downloaded.
 
-### Interview explanation
+### Ubuntu
 
-> "A Docker image is a reusable, read-only template, while a container is an instance of that image running as a process. The same image can be used to create multiple containers."
+```bash
+docker pull ubuntu
+```
 
-### Commands to remember
+The `ubuntu:latest` image was successfully downloaded.
+
+### Alpine
+
+```bash
+docker pull alpine
+```
+
+The `alpine:latest` image was successfully downloaded.
+
+All three images were successfully pulled from Docker Hub.
+
+---
+
+## List Docker Images
+
+Command used:
 
 ```bash
 docker images
+```
+
+### Image Sizes Observed
+
+| Image           | Disk Usage | Content Size |
+| --------------- | ---------: | -----------: |
+| `alpine:latest` |    13.6 MB |      4.27 MB |
+| `ubuntu:latest` |     179 MB |      44.4 MB |
+| `nginx:latest`  |     259 MB |      64.5 MB |
+
+### Observation
+
+The Alpine image was significantly smaller than Ubuntu.
+
+---
+
+# 2. Ubuntu vs Alpine
+
+## Why Is Alpine Much Smaller?
+
+Alpine Linux is designed to be a small and minimal Linux distribution.
+
+It contains only the essential components required to run applications.
+
+Ubuntu is a more feature-rich general-purpose Linux distribution and includes considerably more packages and utilities.
+
+```text
+Alpine
+   ↓
+Minimal Linux distribution
+   ↓
+Smaller image
+
+Ubuntu
+   ↓
+More packages and utilities
+   ↓
+Larger image
+```
+
+### My Understanding
+
+The smaller size of Alpine can be useful when building lightweight Docker images, especially when the application does not require the additional packages provided by a larger distribution.
+
+---
+
+# 3. Inspect a Docker Image
+
+Docker provides image inspection using:
+
+```bash
+docker image inspect nginx
+```
+
+Image inspection can provide information such as:
+
+* Image ID
+* Image configuration
+* Environment variables
+* Architecture
+* Operating system
+* Entrypoint
+* Default command
+* Exposed ports
+* Layers
+* Image metadata
+* Image creation information
+
+### Observation
+
+The Nginx image used during this practical was a Linux `arm64` image.
+
+---
+
+# 4. Remove a Docker Image
+
+Docker provides the following command for removing an image:
+
+```bash
+docker rmi <image-name>
+```
+
+An image should only be removed when it is no longer required and is not being used by a container.
+
+---
+
+# 5. Docker Image Layers
+
+## Image History
+
+Command used:
+
+```bash
+docker image history nginx
+```
+
+The output showed multiple entries representing the history of the Nginx image.
+
+Some entries had actual sizes, while others showed `0B`.
+
+Example observations:
+
+```text
+CMD                              0B
+STOPSIGNAL                       0B
+EXPOSE                           0B
+ENTRYPOINT                       0B
+COPY                             16.4kB
+COPY                             12.3kB
+COPY                             12.3kB
+COPY                             12.3kB
+RUN                              85.3MB
+Base Debian layer                109MB
+```
+
+---
+
+## What Are Docker Image Layers?
+
+Docker images are built using multiple filesystem layers.
+
+Each instruction that changes the filesystem can create a new layer.
+
+Example:
+
+```dockerfile
+FROM ubuntu
+RUN apt-get update
+COPY app.py /app/
+```
+
+Conceptually:
+
+```text
+        Docker Image
+             |
+      +---------------+
+      |   COPY layer  |
+      +---------------+
+             |
+      +---------------+
+      |    RUN layer  |
+      +---------------+
+             |
+      +---------------+
+      |  Ubuntu layer |
+      +---------------+
+```
+
+Docker combines these layers to create the final image.
+
+---
+
+# 6. Why Does Docker Use Layers?
+
+Docker uses layers for several important reasons.
+
+### 1. Reusability
+
+Layers can be shared between different images.
+
+### 2. Caching
+
+Docker can reuse unchanged layers during image builds instead of rebuilding everything.
+
+### 3. Faster Builds
+
+If only one part of a Dockerfile changes, Docker can reuse the previous layers and rebuild only the affected parts.
+
+### 4. Storage Efficiency
+
+Shared layers do not need to be stored multiple times.
+
+---
+
+# 7. Why Do Some Layers Show `0B`?
+
+Some Dockerfile instructions change image metadata rather than adding files to the filesystem.
+
+Examples:
+
+```dockerfile
+CMD
+ENV
+EXPOSE
+ENTRYPOINT
+STOPSIGNAL
+```
+
+These instructions can appear as `0B` in:
+
+```bash
+docker image history nginx
+```
+
+because they do not add a significant filesystem layer.
+
+---
+
+# 8. Docker Container Lifecycle
+
+For the lifecycle practical, I used an Nginx container named:
+
+```text
+nginx-container
+```
+
+Container ID used during the practical:
+
+```text
+b01e63d8ee6c
+```
+
+A later Nginx container was created for the running-container exercises:
+
+```text
+e53a6c9b3416
+```
+
+## Lifecycle Practiced
+
+```text
+Create
+   ↓
+Start
+   ↓
+Pause
+   ↓
+Unpause
+   ↓
+Stop
+   ↓
+Restart
+   ↓
+Kill
+   ↓
+Remove
+```
+
+---
+
+# 9. Create and Start a Container
+
+The Nginx container was created and started using:
+
+```bash
+docker run -d --name nginx-container nginx
+```
+
+Check running containers:
+
+```bash
+docker ps
+```
+
+Example output:
+
+```text
+CONTAINER ID   IMAGE   STATUS       PORTS   NAMES
+b01e63d8ee6c   nginx   Up ...       80/tcp  nginx-container
+```
+
+The container started successfully.
+
+---
+
+# 10. Pause the Container
+
+Command:
+
+```bash
+docker pause b01e63
+```
+
+Check status:
+
+```bash
+docker ps
+```
+
+The container state changed to:
+
+```text
+Up ... (Paused)
+```
+
+### Understanding
+
+A paused container still exists and remains running from Docker's perspective, but its processes are temporarily suspended.
+
+---
+
+# 11. Unpause the Container
+
+Command:
+
+```bash
+docker unpause b01e63
+```
+
+Check status:
+
+```bash
+docker ps
+```
+
+The container returned to:
+
+```text
+Up
+```
+
+---
+
+# 12. Stop the Container
+
+Command:
+
+```bash
+docker stop b01e6
+```
+
+Check all containers:
+
+```bash
+docker ps -a
+```
+
+The container state became:
+
+```text
+Exited (0)
+```
+
+### Understanding
+
+A stopped container still exists and can be started again.
+
+---
+
+# 13. Restart the Container
+
+Command:
+
+```bash
+docker restart b01e6
+```
+
+Check:
+
+```bash
+docker ps
+```
+
+The container returned to:
+
+```text
+Up
+```
+
+---
+
+# 14. Kill the Container
+
+Command:
+
+```bash
+docker kill b01e6
+```
+
+Check:
+
+```bash
+docker ps -a
+```
+
+The container exited with:
+
+```text
+Exited (137)
+```
+
+### `docker stop` vs `docker kill`
+
+`docker stop` attempts to gracefully stop a container.
+
+```bash
+docker stop <container>
+```
+
+`docker kill` immediately terminates the container's main process.
+
+```bash
+docker kill <container>
+```
+
+The killed container in this practical exited with code:
+
+```text
+137
+```
+
+---
+
+# 15. Remove the Container
+
+Command:
+
+```bash
+docker rm b01e63
+```
+
+Check:
+
+```bash
+docker ps -a
+```
+
+The container was removed successfully.
+
+---
+
+# 16. Working with Running Containers
+
+A new Nginx container was started in detached mode:
+
+```bash
+docker run -d --name nginx-container nginx
+```
+
+Container ID:
+
+```text
+e53a6c9b3416
+```
+
+Check the running container:
+
+```bash
+docker ps
+```
+
+The container was running successfully.
+
+---
+
+# 17. View Container Logs
+
+Command:
+
+```bash
+docker logs e53a6c
+```
+
+The logs showed Nginx startup information including:
+
+```text
+nginx/1.31.4
+using the "epoll" event method
+start worker processes
+```
+
+The logs also showed the Nginx entrypoint scripts being executed during startup.
+
+---
+
+# 18. Follow Container Logs in Real Time
+
+Command:
+
+```bash
+docker logs -f e53a6c
+```
+
+The `-f` option means **follow**.
+
+It keeps the terminal attached to the container logs and displays new log entries as they are generated.
+
+I exited follow mode using:
+
+```text
+Ctrl + C
+```
+
+---
+
+# 19. Execute a Shell Inside the Container
+
+Command:
+
+```bash
+docker exec -it e53a6c bash
+```
+
+Inside the container, I checked the root filesystem:
+
+```bash
+ls
+```
+
+The filesystem contained directories such as:
+
+```text
+bin
+boot
+dev
+etc
+home
+lib
+media
+mnt
+opt
+proc
+root
+run
+sbin
+srv
+sys
+tmp
+usr
+var
+```
+
+I also inspected:
+
+```bash
+cd docker-entrypoint.d
+ls
+```
+
+The directory contained Nginx startup scripts.
+
+Finally, I exited the container:
+
+```bash
+exit
+```
+
+---
+
+# 20. Execute a Single Command Inside a Container
+
+Docker allows commands to be executed directly inside a running container without opening an interactive shell.
+
+Example:
+
+```bash
+docker exec e53a6c df -h
+```
+
+The output showed filesystem usage from inside the container:
+
+```text
+Filesystem      Size  Used Avail Use%
+overlay         453G  9.1G  421G   3%
+tmpfs            64M     0   64M   0%
+shm              64M     0   64M   0%
+```
+
+### Understanding
+
+`docker exec` can be used to run individual commands inside a running container.
+
+---
+
+# 21. Inspect the Container
+
+Command:
+
+```bash
+docker inspect e53a6c
+```
+
+`docker inspect` returned detailed information about the container.
+
+## Container Status
+
+```text
+Status: running
+Running: true
+Paused: false
+Restarting: false
+OOMKilled: false
+ExitCode: 0
+```
+
+## Container Name
+
+```text
+/nginx-container
+```
+
+## Image
+
+```text
+nginx
+```
+
+Image digest:
+
+```text
+sha256:0d4374c710a9649200e84f8ef8dbdd4fa76c0c107839cd50f1e42a63916b0f2e
+```
+
+---
+
+# 22. Container Networking
+
+The container was connected to the default Docker bridge network:
+
+```text
+NetworkMode: bridge
+```
+
+## Container IP Address
+
+```text
+172.17.0.2
+```
+
+## Gateway
+
+```text
+172.17.0.1
+```
+
+## Exposed Port
+
+Nginx exposes:
+
+```text
+80/tcp
+```
+
+However, no host port was published because the container was started without `-p`.
+
+Therefore:
+
+```text
+80/tcp
+→ Exposed inside the container
+```
+
+but there was no host mapping such as:
+
+```text
+8080:80
+```
+
+### Important Understanding
+
+An exposed container port and a published host port are not the same thing.
+
+---
+
+# 23. Container Mounts
+
+The inspection showed:
+
+```text
+Mounts: []
+```
+
+Therefore, this container did not have any Docker volumes or bind mounts attached.
+
+---
+
+# 24. Docker Cleanup
+
+## Stop All Running Containers
+
+Command:
+
+```bash
+docker stop $(docker ps -q)
+```
+
+The running Nginx container was stopped.
+
+---
+
+## Remove Stopped Containers
+
+Command:
+
+```bash
+docker container prune
+```
+
+Docker asked for confirmation:
+
+```text
+WARNING! This will remove all stopped containers.
+```
+
+After confirmation, the stopped Nginx container was removed.
+
+Reclaimed space:
+
+```text
+86.02kB
+```
+
+---
+
+## Remove Unused Images
+
+Command:
+
+```bash
+docker image prune
+```
+
+This removes dangling images that are no longer referenced.
+
+In this practical:
+
+```text
+Total reclaimed space: 0B
+```
+
+This means there were no dangling images that could be removed.
+
+---
+
+# 25. Docker Disk Usage
+
+Command:
+
+```bash
+docker system df
+```
+
+Final Docker disk usage:
+
+| Resource      | Total | Active |     Size |     Reclaimable |
+| ------------- | ----: | -----: | -------: | --------------: |
+| Images        |    16 |      0 | 3.359 GB |   2.87 GB (85%) |
+| Containers    |     0 |      0 |      0 B |             0 B |
+| Local Volumes |     2 |      0 | 507.1 MB | 507.1 MB (100%) |
+| Build Cache   |   309 |      0 | 6.242 GB |        4.171 GB |
+
+## Observation
+
+The build cache was using the largest amount of Docker storage:
+
+```text
+Build Cache → 6.242 GB
+```
+
+Images were using:
+
+```text
+3.359 GB
+```
+
+Local volumes were using:
+
+```text
+507.1 MB
+```
+
+### My Understanding
+
+Docker storage is not limited to images and containers.
+
+Build cache and volumes can also consume significant disk space.
+
+---
+
+# 26. Important Docker Commands
+
+## Images
+
+```bash
+docker pull <image>
+docker images
+docker image inspect <image>
+docker image history <image>
+docker rmi <image>
+docker image prune
+```
+
+## Containers
+
+```bash
+docker run -d --name <name> <image>
 docker ps
 docker ps -a
-
-docker run -d --name nginx-container nginx
-
 docker stop <container>
 docker start <container>
 docker restart <container>
@@ -56,45 +852,362 @@ docker kill <container>
 docker rm <container>
 ```
 
-These are the lifecycle commands  practiced. 
+## Container Interaction
 
-### The most important thing
+```bash
+docker logs <container>
+docker logs -f <container>
+docker exec -it <container> bash
+docker exec <container> <command>
+docker inspect <container>
+```
+
+## Cleanup and Storage
+
+```bash
+docker stop $(docker ps -q)
+docker container prune
+docker image prune
+docker system df
+docker system prune
+```
+
+---
+
+# 27. Key Learnings
+
+## 1. Image vs Container
+
+A Docker **image** is a read-only template used to create containers.
+
+A **container** is a running or stopped instance created from an image.
 
 ```text
-Image
-  ↓
-docker run
-  ↓
-Container Created
-  ↓
+Docker Image
+     ↓
+  Container
+```
+
+Multiple containers can be created from the same image.
+
+---
+
+## 2. Docker Images Are Layered
+
+Docker images consist of multiple layers.
+
+Layers can be reused and cached, which helps Docker build and distribute images efficiently.
+
+---
+
+## 3. Containers Have Different States
+
+During the practical, the container went through several states:
+
+```text
+Created / Started
+       ↓
 Running
-  ↓
-Pause / Unpause
-  ↓
-Stop
-  ↓
-Start / Restart
-  ↓
-Kill
-  ↓
-Remove
+       ↓
+Paused
+       ↓
+Running
+       ↓
+Exited
+       ↓
+Running
+       ↓
+Killed / Exited
+       ↓
+Removed
 ```
 
-for example:
+Understanding these states is important when troubleshooting Docker containers.
 
-> "Application is down inside a Docker container. What will you check?"
+---
 
+## 4. `docker stop` vs `docker kill`
+
+### Stop
+
+```bash
+docker stop <container>
+```
+
+Attempts to gracefully stop the container.
+
+### Kill
+
+```bash
+docker kill <container>
+```
+
+Immediately terminates the container's main process.
+
+The killed container in this practical exited with:
 
 ```text
-1. docker ps
-2. docker ps -a
-3. docker logs <container>
-4. docker inspect <container>
-5. docker exec -it <container> bash
-6. Check process/service
-7. Check ports
-8. Check network
-9. Check resource usage
-10. Restart only after understanding the issue
+137
 ```
 
+---
+
+## 5. `docker exec`
+
+`docker exec` allows commands to be executed inside an already running container.
+
+Interactive shell:
+
+```bash
+docker exec -it <container> bash
+```
+
+Single command:
+
+```bash
+docker exec <container> df -h
+```
+
+---
+
+## 6. `docker inspect`
+
+`docker inspect` is useful when troubleshooting because it provides detailed container configuration and runtime information.
+
+It can reveal:
+
+* Container state
+* Image
+* IP address
+* Network configuration
+* Port configuration
+* Mounts
+* Environment variables
+* Entrypoint
+* Command
+* Restart policy
+
+---
+
+# 28. What Surprised Me
+
+One thing that stood out during this practical was how much information Docker keeps about a container.
+
+A simple Nginx container had information about its:
+
+* Image
+* Filesystem
+* Network
+* IP address
+* Environment variables
+* Entrypoint
+* Exposed ports
+* Runtime state
+* Configuration
+
+Another important observation was the difference between the image's **content size** and **disk usage** shown by `docker images`.
+
+The image layers also made it clear why Docker can reuse previously built content instead of rebuilding an entire image every time.
+
+---
+
+# 29. Screenshots / Evidence
+
+The following screenshots should be added to the repository as evidence of the practical:
+
+1. Docker images after pulling Nginx, Ubuntu, and Alpine
+2. `docker image history nginx`
+3. Container running with `docker ps`
+4. Container paused with `docker ps`
+5. Container stopped with `docker ps -a`
+6. Container restarted with `docker ps`
+7. Container killed with `docker ps -a`
+8. `docker logs`
+9. `docker logs -f`
+10. `docker exec -it`
+11. `docker inspect`
+12. `docker system df`
+
+---
+
+# 30. Personal Learning Record
+
+## What I Practiced
+
+* Pulled Docker images from Docker Hub
+* Compared Alpine, Ubuntu, and Nginx image sizes
+* Inspected Docker image metadata
+* Viewed image history
+* Understood Docker image layers
+* Learned why Docker uses layers
+* Observed Docker caching
+* Practiced the complete container lifecycle
+* Started and stopped containers
+* Paused and unpaused containers
+* Restarted containers
+* Killed containers
+* Removed containers
+* Viewed container logs
+* Followed logs in real time
+* Entered a running container
+* Executed commands inside a container
+* Inspected container configuration
+* Checked container networking
+* Checked container IP and gateway
+* Understood exposed vs published ports
+* Checked container mounts
+* Cleaned unused Docker resources
+* Checked Docker disk usage
+
+---
+
+# 31. Interview Readiness
+
+After this practical, I should be able to explain:
+
+1. What is a Docker image?
+2. What is a Docker container?
+3. What is the relationship between an image and a container?
+4. Why is Alpine smaller than Ubuntu?
+5. What are Docker image layers?
+6. Why does Docker use layers?
+7. What is Docker layer caching?
+8. Why do some entries in `docker image history` show `0B`?
+9. What is the Docker container lifecycle?
+10. Difference between `docker stop` and `docker kill`
+11. What does exit code `137` indicate in this practical?
+12. What is `docker exec`?
+13. Difference between `docker exec -it` and executing a single command
+14. What information does `docker inspect` provide?
+15. What is the Docker bridge network?
+16. What is a container IP address?
+17. Difference between an exposed port and a published port
+18. Why couldn't the Nginx container be accessed through the host when it was started without `-p`?
+19. How do you check Docker disk usage?
+20. What can consume Docker disk space besides images and containers?
+
+---
+
+# 32. Real-World Troubleshooting Connection
+
+The practical commands I learned today can be directly connected to production troubleshooting.
+
+For example, if a containerized application is not working, I can start with:
+
+```bash
+docker ps
+```
+
+Then check:
+
+```bash
+docker logs <container>
+```
+
+Inspect the container:
+
+```bash
+docker inspect <container>
+```
+
+Check networking information:
+
+```bash
+docker inspect <container>
+```
+
+Execute commands inside the container:
+
+```bash
+docker exec -it <container> bash
+```
+
+Check filesystem usage:
+
+```bash
+docker exec <container> df -h
+```
+
+This gives me a structured approach:
+
+```text
+Application Issue
+       ↓
+Is container running?
+       ↓
+docker ps
+       ↓
+Check logs
+       ↓
+docker logs
+       ↓
+Inspect configuration
+       ↓
+docker inspect
+       ↓
+Check network / ports
+       ↓
+docker inspect
+       ↓
+Enter container if required
+       ↓
+docker exec
+```
+
+---
+
+# 33. Conclusion
+
+Day 30 helped me understand Docker beyond simply running containers.
+
+I practiced working with Docker images, explored image layers, observed the complete container lifecycle, inspected a running Nginx container, viewed its logs, executed commands inside it, checked its networking information, and cleaned up Docker resources.
+
+The main takeaway is:
+
+> **Docker images provide the reusable foundation, while containers are runtime instances created from those images.**
+
+Understanding image layers, container lifecycle, networking, inspection, logs, and Docker storage is essential for troubleshooting and managing containerized applications.
+
+---
+
+# Commands Practiced
+
+```bash
+docker pull nginx
+docker pull ubuntu
+docker pull alpine
+
+docker images
+
+docker image inspect nginx
+docker image history nginx
+docker rmi <image-name>
+
+docker run -d --name nginx-container nginx
+docker ps
+docker ps -a
+
+docker pause <container>
+docker unpause <container>
+
+docker stop <container>
+docker start <container>
+docker restart <container>
+docker kill <container>
+docker rm <container>
+
+docker logs <container>
+docker logs -f <container>
+
+docker exec -it <container> bash
+docker exec <container> df -h
+
+docker inspect <container>
+
+docker stop $(docker ps -q)
+docker container prune
+docker image prune
+docker system df
+docker system prune
+
+. 
