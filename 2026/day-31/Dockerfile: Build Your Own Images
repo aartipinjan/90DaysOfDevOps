@@ -1,0 +1,866 @@
+# Day 31 – Dockerfile: Build Your Own Images
+
+## 🎯 Objective
+
+Today's goal was to understand how to create **custom Docker images using Dockerfiles**.
+
+During this practical, I worked with:
+
+* Dockerfile instructions
+* Building custom Docker images
+* `CMD` and `ENTRYPOINT`
+* Nginx custom images
+* Port mapping
+* `.dockerignore`
+* Docker build context
+* Docker layer caching
+* Verifying files inside containers
+
+---
+
+# 1. First Dockerfile
+
+## Objective
+
+Create a custom Ubuntu-based Docker image that:
+
+1. Uses Ubuntu as the base image
+2. Installs `curl`
+3. Sets the working directory to `/app`
+4. Prints a custom message when the container starts
+
+## Project Structure
+
+```text
+my-first-image/
+└── Dockerfile
+```
+
+## Dockerfile
+
+```dockerfile
+FROM ubuntu
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install curl -y
+
+CMD ["echo", "Hello from my custom image!"]
+```
+
+## Understanding the Instructions
+
+### `FROM`
+
+Defines the base image used to build the custom image.
+
+```dockerfile
+FROM ubuntu
+```
+
+Every Dockerfile requires a base image from which the custom image is built.
+
+### `WORKDIR`
+
+Sets the working directory inside the image/container.
+
+```dockerfile
+WORKDIR /app
+```
+
+Subsequent Dockerfile instructions operate relative to this directory unless another directory is specified.
+
+### `RUN`
+
+Executes commands **during image build time**.
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install curl -y
+```
+
+The result of the `RUN` instruction becomes part of the image.
+
+### `CMD`
+
+Defines the default command that runs when the container starts.
+
+```dockerfile
+CMD ["echo", "Hello from my custom image!"]
+```
+
+---
+
+## Build the Image
+
+```bash
+docker build -t my-ubuntu:v1 .
+```
+
+The image was successfully built and tagged as:
+
+```text
+my-ubuntu:v1
+```
+
+This also demonstrated Docker's build process and layer caching.
+
+## Run the Container
+
+```bash
+docker run --name ubuntu-cont my-ubuntu:v1
+```
+
+Output:
+
+```text
+Hello from my custom image!
+```
+
+### Result
+
+This verified that the `CMD` instruction executes when the container starts.
+
+---
+
+# 2. Important Dockerfile Instructions
+
+The main Dockerfile instructions practiced during this session were:
+
+```dockerfile
+FROM
+RUN
+COPY
+WORKDIR
+EXPOSE
+CMD
+ENTRYPOINT
+```
+
+---
+
+## `FROM`
+
+Defines the base image.
+
+```dockerfile
+FROM ubuntu
+```
+
+Example:
+
+```dockerfile
+FROM nginx:alpine
+```
+
+---
+
+## `RUN`
+
+Executes commands during image creation.
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install curl -y
+```
+
+The result becomes part of the Docker image.
+
+---
+
+## `COPY`
+
+Copies files from the Docker build context into the image.
+
+```dockerfile
+COPY index.html .
+```
+
+---
+
+## `WORKDIR`
+
+Sets the working directory.
+
+```dockerfile
+WORKDIR /app
+```
+
+For the Nginx image:
+
+```dockerfile
+WORKDIR /usr/share/nginx/html
+```
+
+---
+
+## `EXPOSE`
+
+Documents the port on which the containerized application listens.
+
+```dockerfile
+EXPOSE 80
+```
+
+**Important:** `EXPOSE` does **not** publish the port to the host.
+
+Port publishing is done using:
+
+```bash
+docker run -p 80:80 image
+```
+
+---
+
+## `CMD`
+
+Defines the default command executed when a container starts.
+
+Example:
+
+```dockerfile
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+---
+
+# 3. CMD vs ENTRYPOINT
+
+## `CMD`
+
+`CMD` provides a default command.
+
+```dockerfile
+CMD ["echo", "hello"]
+```
+
+The command supplied during `docker run` can replace the default `CMD`.
+
+Example:
+
+```text
+Dockerfile:
+CMD ["echo", "hello"]
+
+docker run image
+        ↓
+echo hello
+
+docker run image <custom-command>
+        ↓
+custom command replaces CMD
+```
+
+---
+
+## `ENTRYPOINT`
+
+For the ENTRYPOINT practical, I created a separate Dockerfile.
+
+### Dockerfile.entrypoint
+
+```dockerfile
+FROM ubuntu
+
+WORKDIR /app
+
+ENTRYPOINT ["echo"]
+```
+
+Build the image:
+
+```bash
+docker build -t ubuntu-entrypoint -f Dockerfile.entrypoint .
+```
+
+Run the image:
+
+```bash
+docker run --name entrypoint-cont ubuntu-entrypoint "Hello, this is entrypoint argument"
+```
+
+Output:
+
+```text
+Hello, this is entrypoint argument
+```
+
+The runtime argument was passed to the `ENTRYPOINT` command.
+
+---
+
+## CMD vs ENTRYPOINT – Quick Comparison
+
+| CMD                                   | ENTRYPOINT                                                         |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| Provides a default command            | Defines the main executable                                        |
+| Can easily be replaced at runtime     | Runtime arguments are normally appended                            |
+| Useful for default container behavior | Useful when the container should behave like a specific executable |
+| Can provide default arguments         | Helps make the executable fixed                                    |
+
+### Simple Example
+
+**CMD**
+
+```dockerfile
+CMD ["echo", "hello"]
+```
+
+The runtime command can replace the `CMD`.
+
+**ENTRYPOINT**
+
+```dockerfile
+ENTRYPOINT ["echo"]
+```
+
+Additional runtime arguments are passed to `echo`.
+
+---
+
+# 4. Build a Simple Web Application Image
+
+## Static HTML
+
+I created an `index.html` file for a static website.
+
+```html
+<h1>hello this is a testing file</h1>
+```
+
+## Project Structure
+
+```text
+my-first-image/
+├── Dockerfile
+├── Dockerfile.entrypoint
+├── Dockerfile.nginx
+└── index.html
+```
+
+---
+
+## Dockerfile.nginx
+
+```dockerfile
+FROM nginx:alpine
+
+WORKDIR /usr/share/nginx/html
+
+COPY index.html .
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+### What this Dockerfile does
+
+1. Uses `nginx:alpine` as the base image
+2. Sets the Nginx web root as the working directory
+3. Copies `index.html` into the web root
+4. Documents port `80`
+5. Starts Nginx in the foreground
+
+---
+
+## Build the Image
+
+```bash
+docker build -t nginx-server -f Dockerfile.nginx .
+```
+
+The build output showed:
+
+```text
+[2/3] WORKDIR /usr/share/nginx/html
+[3/3] COPY index.html .
+```
+
+---
+
+## Tag the Image
+
+```bash
+docker image tag nginx-server my-website:v1
+```
+
+---
+
+## Run the Website
+
+```bash
+docker run -d -p 80:80 my-website:v1
+```
+
+Port mapping:
+
+```text
+0.0.0.0:80 -> 80/tcp
+```
+
+The application can then be accessed through:
+
+```text
+http://localhost
+```
+
+---
+
+# 5. `.dockerignore`
+
+## Why `.dockerignore` Is Used
+
+A `.dockerignore` file specifies files and directories that should **not be sent as part of the Docker build context**.
+
+It helps with:
+
+* Reducing build context size
+* Preventing unnecessary files from being included
+* Keeping sensitive files such as `.env` out of the build context
+* Improving build performance
+
+## Example
+
+```text
+*.env
+*.txt
+```
+
+For real projects, common exclusions may include:
+
+```text
+node_modules
+.git
+*.md
+.env
+```
+
+---
+
+# 6. Docker Build Context
+
+The `.` at the end of a Docker build command represents the **build context**.
+
+Example:
+
+```bash
+docker build -t dockerignore-prac .
+```
+
+Here:
+
+```text
+. → Current directory
+```
+
+Docker uses this directory as the build context.
+
+Files referenced by `COPY` and `ADD` must come from within the build context and must not be excluded by `.dockerignore`.
+
+---
+
+## Build Context Example
+
+During the practical, Docker reported:
+
+```text
+transferring context: 173B
+```
+
+This demonstrated that Docker sends the build context to the Docker daemon/build system and that `.dockerignore` controls which files are included.
+
+---
+
+# 7. Verify Files Inside the Container
+
+I entered the Nginx container using:
+
+```bash
+docker exec -it 1a23ce45 sh
+```
+
+Then checked the directory:
+
+```bash
+ls -la
+```
+
+The `/app` directory contained no copied project files.
+
+This helped demonstrate the effect of `.dockerignore` and the difference between the build context and files actually copied into the image.
+
+---
+
+# 8. Docker Build Cache
+
+Docker uses **layer caching** during image builds.
+
+During the practical, the build output showed:
+
+```text
+CACHED [2/3] WORKDIR /app
+```
+
+This means Docker reused the previously built layer instead of executing the instruction again.
+
+---
+
+## Why Does Dockerfile Instruction Order Matter?
+
+Dockerfile instructions are processed sequentially, and instructions can create image layers.
+
+If an earlier layer changes, subsequent layers may need to be rebuilt.
+
+Example:
+
+```dockerfile
+FROM ubuntu
+
+RUN apt-get update && apt-get install curl -y
+
+COPY application-files .
+
+CMD ["..."]
+```
+
+If the application files change, Docker can potentially reuse the dependency-installation layer.
+
+Therefore, frequently changing instructions should generally be placed later in the Dockerfile.
+
+---
+
+# 9. Dockerfile Best Practices
+
+## 1. Use a Suitable Base Image
+
+Example:
+
+```dockerfile
+FROM nginx:alpine
+```
+
+A smaller base image can reduce the final image size when it meets the application's requirements.
+
+---
+
+## 2. Combine Related Commands
+
+Instead of:
+
+```dockerfile
+RUN apt-get update
+RUN apt-get install curl -y
+```
+
+Use:
+
+```dockerfile
+RUN apt-get update && \
+    apt-get install curl -y
+```
+
+This can reduce unnecessary layers and keeps the package update and installation together.
+
+---
+
+## 3. Use `.dockerignore`
+
+Exclude unnecessary files from the build context.
+
+Example:
+
+```text
+node_modules
+.git
+*.md
+.env
+```
+
+This helps keep builds smaller, faster, and cleaner.
+
+---
+
+## 4. Order Instructions Carefully
+
+Place stable instructions before frequently changing instructions.
+
+Example:
+
+```dockerfile
+FROM nginx:alpine
+
+WORKDIR /usr/share/nginx/html
+
+COPY index.html .
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+If only `index.html` changes, Docker can reuse the previous layers that were not affected.
+
+---
+
+# 10. Important Commands Practiced
+
+## Build Images
+
+```bash
+docker build -t my-ubuntu:v1 .
+```
+
+```bash
+docker build -t ubuntu-entrypoint -f Dockerfile.entrypoint .
+```
+
+```bash
+docker build -t nginx-server -f Dockerfile.nginx .
+```
+
+```bash
+docker build -t dockerignore-prac .
+```
+
+## Run Containers
+
+```bash
+docker run --name ubuntu-cont my-ubuntu:v1
+```
+
+```bash
+docker run --name entrypoint-cont ubuntu-entrypoint "Hello, this is entrypoint argument"
+```
+
+```bash
+docker run -d -p 80:80 my-website:v1
+```
+
+## Tag an Image
+
+```bash
+docker image tag nginx-server my-website:v1
+```
+
+## Execute Commands Inside Containers
+
+```bash
+docker exec -it <container> sh
+```
+
+```bash
+docker exec -it <container> bash
+```
+
+## Check Running Containers
+
+```bash
+docker ps
+```
+
+---
+
+# 11. Key Learnings
+
+## Dockerfile
+
+A Dockerfile is a text file containing instructions used to build a Docker image.
+
+```text
+Dockerfile
+    ↓
+docker build
+    ↓
+Docker Image
+    ↓
+docker run
+    ↓
+Container
+```
+
+---
+
+## `RUN` vs `CMD`
+
+### `RUN`
+
+Executes during **image build time**.
+
+```dockerfile
+RUN apt-get update
+```
+
+### `CMD`
+
+Executes when the **container starts**.
+
+```dockerfile
+CMD ["echo", "Hello"]
+```
+
+---
+
+## `COPY`
+
+Copies files from the Docker build context into the image.
+
+```dockerfile
+COPY index.html .
+```
+
+---
+
+## `EXPOSE`
+
+Documents the port used by the application.
+
+```dockerfile
+EXPOSE 80
+```
+
+It does **not** publish the port to the host.
+
+Publishing is done with:
+
+```bash
+docker run -p 80:80 image
+```
+
+---
+
+## `WORKDIR`
+
+Sets the current working directory inside the image/container.
+
+```dockerfile
+WORKDIR /app
+```
+
+---
+
+## `.dockerignore`
+
+Prevents unnecessary files from being included in the Docker build context.
+
+This helps keep builds smaller, faster, and cleaner.
+
+---
+
+# 12. Final Dockerfiles
+
+## Dockerfile
+
+```dockerfile
+FROM ubuntu
+
+WORKDIR /app
+
+RUN apt-get update && \
+    apt-get install curl -y
+
+CMD ["echo", "Hello from my custom image!"]
+```
+
+## Dockerfile.entrypoint
+
+```dockerfile
+FROM ubuntu
+
+WORKDIR /app
+
+ENTRYPOINT ["echo"]
+```
+
+## Dockerfile.nginx
+
+```dockerfile
+FROM nginx:alpine
+
+WORKDIR /usr/share/nginx/html
+
+COPY index.html .
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+---
+
+# 13. Final Project Structure
+
+```text
+day-31/
+│
+├── my-first-image/
+│   ├── Dockerfile
+│   ├── Dockerfile.entrypoint
+│   ├── Dockerfile.nginx
+│   └── index.html
+│
+└── day-31-dockerfile.md
+```
+
+---
+
+# 14. Personal Learning Record
+
+### What I Practiced
+
+* Created my first Dockerfile
+* Built a custom Ubuntu image
+* Installed `curl` during image build
+* Used `FROM`, `RUN`, `COPY`, `WORKDIR`, `EXPOSE`, `CMD`, and `ENTRYPOINT`
+* Compared `CMD` and `ENTRYPOINT`
+* Created an Nginx-based custom image
+* Served a static HTML page using Nginx
+* Practiced port mapping
+* Used `.dockerignore`
+* Understood Docker build context
+* Observed Docker layer caching
+* Verified files inside a running container
+
+### My Key Understanding
+
+The most important concept from this practical was understanding that a **Dockerfile is a set of instructions used to construct an image layer by layer**.
+
+I also learned that **instruction ordering, build context, `.dockerignore`, and Docker layer caching** can have a significant impact on Docker build efficiency.
+
+---
+
+# 15. Interview Readiness
+
+After this practical, I should be able to explain:
+
+1. What is a Dockerfile?
+2. Difference between an image and a container
+3. Difference between `RUN` and `CMD`
+4. Difference between `CMD` and `ENTRYPOINT`
+5. What does `FROM` do?
+6. What does `COPY` do?
+7. What is `WORKDIR`?
+8. What is `EXPOSE`?
+9. Does `EXPOSE` publish a port?
+10. What is Docker build context?
+11. Why do we use `.dockerignore`?
+12. What is Docker layer caching?
+13. Why does Dockerfile instruction order matter?
+14. Why is `nginx:alpine` useful for a lightweight image?
+15. How would you troubleshoot a containerized Nginx application that is not accessible?
+
+---
+
+# Conclusion
+
+Day 31 helped me move from simply **running existing Docker images** to **creating my own custom Docker images**.
+
+I practiced writing Dockerfiles using `FROM`, `RUN`, `COPY`, `WORKDIR`, `EXPOSE`, `CMD`, and `ENTRYPOINT`.
+
+I also built an Ubuntu-based image, created an Nginx-based static website image, practiced port mapping, used `.dockerignore`, and observed Docker's build cache.
+
+This practical strengthened my understanding of how Docker images are constructed and how Dockerfiles are used in real-world containerized application workflows.
+
+
+
