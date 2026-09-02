@@ -1,0 +1,300 @@
+# Day 06 – Linux Fundamentals: File I/O Practice
+
+## Objective
+
+Practice basic Linux file input/output operations using fundamental commands.
+
+The goal was to practice:
+
+* Creating a file
+* Writing text to a file
+* Appending data
+* Reading the complete file
+* Reading selected portions of a file
+* Writing and displaying content using `tee`
+
+---
+
+# 1. Create a File
+
+### Command
+
+```bash
+touch notes.txt
+```
+
+### What it does
+
+Creates an empty file named `notes.txt`.
+
+---
+
+# 2. Write the First Line
+
+### Command
+
+```bash
+echo "Linux File I/O Practice" > notes.txt
+```
+
+### What it does
+
+Writes the text to `notes.txt`.
+
+The `>` operator **overwrites** the existing contents of the file.
+
+### Important
+
+```text
+>   → Write / overwrite
+```
+
+---
+
+# 3. Append the Second Line
+
+### Command
+
+```bash
+echo "Learning output redirection using >>." >> notes.txt
+```
+
+### What it does
+
+Appends the new text to the end of the file without removing the existing content.
+
+### Important
+
+```text
+>>  → Append
+```
+
+---
+
+# 4. Append the Third Line Using `tee`
+
+### Command
+
+```bash
+echo "Using tee command to write and display." | tee -a notes.txt
+```
+
+### Output
+
+```text
+Using tee command to write and display.
+```
+
+### What it does
+
+The `tee -a` command:
+
+1. Displays the text on the terminal.
+2. Appends the same text to `notes.txt`.
+
+```text
+echo
+  |
+  v
+tee -a
+  |
+  +----> Terminal
+  |
+  +----> notes.txt
+```
+
+---
+
+# 5. Add More Content
+
+To keep the practice file short and repeatable, additional lines were appended:
+
+```bash
+echo "Linux is the foundation of DevOps." >> notes.txt
+echo "Practice commands every day." >> notes.txt
+echo "Configuration files are usually text files." >> notes.txt
+echo "Logs help during troubleshooting." >> notes.txt
+echo "This is the last line." >> notes.txt
+```
+
+The file now contains **8 lines**.
+
+---
+
+# 6. Read the Entire File
+
+### Command
+
+```bash
+cat notes.txt
+```
+
+### Output
+
+```text
+Linux File I/O Practice
+Learning output redirection using >>.
+Using tee command to write and display.
+Linux is the foundation of DevOps.
+Practice commands every day.
+Configuration files are usually text files.
+Logs help during troubleshooting.
+This is the last line.
+```
+
+### What it does
+
+`cat` displays the complete contents of the file.
+
+---
+
+# 7. Read the First Two Lines
+
+### Command
+
+```bash
+head -n 2 notes.txt
+```
+
+### Output
+
+```text
+Linux File I/O Practice
+Learning output redirection using >>.
+```
+
+### What it does
+
+Displays only the first **2 lines** of the file.
+
+---
+
+# 8. Read the Last Two Lines
+
+### Command
+
+```bash
+tail -n 2 notes.txt
+```
+
+### Output
+
+```text
+Logs help during troubleshooting.
+This is the last line.
+```
+
+### What it does
+
+Displays only the last **2 lines** of the file.
+
+---
+
+# File Content Summary
+
+The final `notes.txt` contains:
+
+```text
+1. Linux File I/O Practice
+2. Learning output redirection using >>.
+3. Using tee command to write and display.
+4. Linux is the foundation of DevOps.
+5. Practice commands every day.
+6. Configuration files are usually text files.
+7. Logs help during troubleshooting.
+8. This is the last line.
+```
+
+This satisfies the requirement of keeping the practice file within **8–12 lines**.
+
+---
+
+# Commands Used
+
+```bash
+touch notes.txt
+
+echo "Linux File I/O Practice" > notes.txt
+
+echo "Learning output redirection using >>." >> notes.txt
+
+echo "Using tee command to write and display." | tee -a notes.txt
+
+echo "Linux is the foundation of DevOps." >> notes.txt
+
+echo "Practice commands every day." >> notes.txt
+
+echo "Configuration files are usually text files." >> notes.txt
+
+echo "Logs help during troubleshooting." >> notes.txt
+
+echo "This is the last line." >> notes.txt
+
+cat notes.txt
+
+head -n 2 notes.txt
+
+tail -n 2 notes.txt
+```
+
+---
+
+# Key Learnings
+
+| Command           | Purpose                                         |
+| ----------------- | ----------------------------------------------- |
+| `touch notes.txt` | Create an empty file                            |
+| `>`               | Write data and overwrite existing content       |
+| `>>`              | Append data to an existing file                 |
+| `tee -a`          | Append data while displaying it on the terminal |
+| `cat`             | Display the complete file                       |
+| `head -n 2`       | Display the first 2 lines                       |
+| `tail -n 2`       | Display the last 2 lines                        |
+
+---
+
+# DevOps Connection
+
+File I/O is a basic but important Linux skill used regularly in DevOps.
+
+Common examples include:
+
+```text
+Configuration files
+       ↓
+/etc/*.conf
+
+Application logs
+       ↓
+/var/log/*
+
+Scripts
+       ↓
+*.sh
+
+Environment/configuration data
+       ↓
+*.env / config files
+```
+
+For example, during troubleshooting:
+
+```bash
+tail -n 50 application.log
+```
+
+can quickly show recent application activity, while:
+
+```bash
+grep "ERROR" application.log
+```
+
+can help identify errors.
+
+---
+
+# Final Learning
+
+> **Today I practiced creating, writing, appending, and reading Linux text files using `touch`, `>`, `>>`, `tee`, `cat`, `head`, and `tail`. These commands form the foundation for working with configuration files, scripts, and logs in Linux and DevOps environments.**
+
+One small point: your original note says **“The file now contains 8 lines”**, and that is correct. Your commands produce exactly 8 lines, so your Day 06 submission satisfies the exercise requirement cleanly.
