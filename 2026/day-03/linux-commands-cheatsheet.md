@@ -61,7 +61,7 @@ du -sh <directory>
 ```
 Disk & System Health
 
-These commands are worth adding because they are frequently used in Linux administration and DevOps troubleshooting.
+
 
 Command	Description
 free -m	Display memory usage in MB.
@@ -144,7 +144,7 @@ Follow logs in real time:
 journalctl -f
 ```
 
-## One Correction to Remember
+
 
 `kill <PID>` is not technically synonymous with “gracefully stop” because `kill` sends a signal and, without specifying one, normally sends `SIGTERM`. For your interview notes, this is better written as:
 
@@ -217,7 +217,7 @@ ss -tuln | grep <port>
 journalctl -u <service>
 curl -v http://localhost:<port>
 
-This approach connects your Linux administration experience directly to DevOps troubleshooting.
+
 
 Quick Memory Map
 PROCESS
