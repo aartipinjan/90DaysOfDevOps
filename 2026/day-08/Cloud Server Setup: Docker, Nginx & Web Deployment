@@ -1,0 +1,426 @@
+# Day 08 – Cloud Server Setup: Docker, Nginx & Web Deployment
+
+## Objective
+
+Deploy a Linux server on the cloud, connect to it using SSH, update the operating system, install Docker and Nginx, verify that the web server is accessible over the internet, and collect Nginx logs.
+
+---
+
+# Part 1 – Launch Cloud Instance & SSH Access
+
+## Step 1 – Connect to the Server
+
+### Command
+
+```bash
+ssh -i your-key.pem ubuntu@<YOUR_PUBLIC_IP>
+```
+
+### Output
+
+```text
+Welcome to Ubuntu 24.04 LTS
+ubuntu@ip-172-31-xx-xx:~$
+```
+
+### Observation
+
+Successfully connected to the cloud server using SSH.
+
+📸 **Screenshot Required**
+
+* SSH connection established.
+
+---
+
+# Part 2 – Update the Server
+
+## Step 1 – Update Package Lists
+
+```bash
+sudo apt update
+```
+
+### Observation
+
+The package lists were updated successfully.
+
+---
+
+## Step 2 – Upgrade Installed Packages
+
+```bash
+sudo apt upgrade -y
+```
+
+### Observation
+
+Available package updates were installed successfully.
+
+---
+
+# Part 3 – Install Docker
+
+## Step 1 – Install Docker
+
+```bash
+sudo apt install docker.io -y
+```
+
+### Observation
+
+Docker was installed successfully using the Ubuntu package manager.
+
+---
+
+## Step 2 – Verify Docker Installation
+
+```bash
+docker --version
+```
+
+### Output
+
+```text
+Docker version 29.1.3
+```
+
+### Observation
+
+Confirmed that Docker is installed and the Docker CLI is available.
+
+---
+
+## Step 3 – Check Docker Service
+
+```bash
+sudo systemctl status docker
+```
+
+### Observation
+
+Confirmed that the Docker service is active and running.
+
+---
+
+# Part 4 – Install Nginx
+
+## Step 1 – Install Nginx
+
+```bash
+sudo apt install nginx -y
+```
+
+### Observation
+
+Nginx was installed successfully.
+
+---
+
+## Step 2 – Verify Nginx Service
+
+```bash
+sudo systemctl status nginx
+```
+
+### Output
+
+```text
+Active: active (running)
+```
+
+### Observation
+
+Confirmed that the Nginx service is active and running.
+
+---
+
+## Step 3 – Enable Nginx at Boot
+
+```bash
+sudo systemctl enable nginx
+```
+
+### Observation
+
+Nginx is configured to start automatically when the server boots.
+
+---
+
+# Part 5 – Configure Cloud Security Group
+
+The cloud instance security group/firewall was configured to allow the required inbound traffic.
+
+| Port  | Protocol | Purpose                                 |
+| ----- | -------- | --------------------------------------- |
+| `22`  | TCP      | SSH remote administration               |
+| `80`  | TCP      | HTTP web traffic                        |
+| `443` | TCP      | HTTPS traffic, when HTTPS is configured |
+
+### Observation
+
+Port `80` was allowed so that the Nginx web server could be accessed from the internet.
+
+> **Important:** Opening port `443` alone does not enable HTTPS. An SSL/TLS certificate and HTTPS configuration are also required on the web server.
+
+---
+
+# Part 6 – Verify Web Server
+
+## Step 1 – Local Test
+
+```bash
+curl localhost
+```
+
+### Observation
+
+Received the default Nginx HTML page.
+
+This confirmed that Nginx was responding locally on the server.
+
+---
+
+## Step 2 – Browser Test
+
+Opened:
+
+```text
+http://<YOUR_PUBLIC_IP>
+```
+
+Example:
+
+```text
+http://16.146.78.204
+```
+
+### Result
+
+The default **Welcome to Nginx!** page loaded successfully.
+
+📸 **Screenshot Required**
+
+* Nginx welcome page in the browser.
+
+### Observation
+
+The successful browser test confirmed that:
+
+```text
+Internet
+    ↓
+Cloud Security Group
+    ↓
+Port 80
+    ↓
+Nginx
+    ↓
+Welcome Page
+```
+
+was working correctly.
+
+---
+
+# Part 7 – View Nginx Logs
+
+## Step 1 – Check Access Log
+
+```bash
+cat /var/log/nginx/access.log
+```
+
+### Observation
+
+Displayed HTTP requests received by the Nginx server.
+
+The browser request to the public IP should appear in the access log.
+
+---
+
+## Step 2 – Check Error Log
+
+```bash
+cat /var/log/nginx/error.log
+```
+
+### Observation
+
+Reviewed the Nginx error log. No critical Nginx errors were observed in the reviewed output.
+
+---
+
+# Part 8 – Save Logs
+
+## Step 1 – Save Access Log
+
+```bash
+cp /var/log/nginx/access.log ~/nginx-logs.txt
+```
+
+### Step 2 – Verify the File
+
+```bash
+cat ~/nginx-logs.txt
+```
+
+### Observation
+
+Successfully copied the Nginx access log to the home directory and verified its contents.
+
+📸 **Screenshot Required**
+
+* Contents of `nginx-logs.txt`
+
+---
+
+# Part 9 – Download Log File
+
+Run this command from the **local machine**:
+
+```bash
+scp -i your-key.pem ubuntu@<YOUR_PUBLIC_IP>:~/nginx-logs.txt .
+```
+
+### Observation
+
+Successfully downloaded the Nginx log file from the remote cloud server to the local machine.
+
+---
+
+# Commands Used
+
+```bash
+ssh -i your-key.pem ubuntu@<YOUR_PUBLIC_IP>
+
+sudo apt update
+
+sudo apt upgrade -y
+
+sudo apt install docker.io -y
+
+docker --version
+
+sudo systemctl status docker
+
+sudo apt install nginx -y
+
+sudo systemctl status nginx
+
+sudo systemctl enable nginx
+
+curl localhost
+
+cat /var/log/nginx/access.log
+
+cat /var/log/nginx/error.log
+
+cp /var/log/nginx/access.log ~/nginx-logs.txt
+
+cat ~/nginx-logs.txt
+
+scp -i your-key.pem ubuntu@<YOUR_PUBLIC_IP>:~/nginx-logs.txt .
+```
+
+---
+
+# Files Created
+
+```text
+nginx-logs.txt
+```
+
+---
+
+# Screenshots Included
+
+* SSH connection to the cloud instance
+* Nginx welcome page in the browser
+* Contents of `nginx-logs.txt`
+
+---
+
+# Key Learnings
+
+* Connected securely to a cloud server using SSH.
+* Updated the operating system packages using `apt`.
+* Installed and verified Docker.
+* Checked the Docker service using `systemctl`.
+* Installed and configured Nginx.
+* Enabled Nginx to start automatically at boot.
+* Configured cloud inbound access for SSH and HTTP.
+* Verified Nginx locally using `curl`.
+* Verified Nginx externally through the server's public IP.
+* Collected Nginx access and error logs.
+* Copied the access log to the user's home directory.
+* Downloaded a remote log file using `scp`.
+
+---
+
+# Real-World DevOps Connection
+
+This exercise combines several tasks commonly performed by a Linux/DevOps engineer:
+
+```text
+Cloud Instance
+      ↓
+SSH Access
+      ↓
+OS Update
+      ↓
+Install Docker / Nginx
+      ↓
+Service Verification
+      ↓
+Security Group
+      ↓
+Web Connectivity Test
+      ↓
+Log Collection
+      ↓
+Log Download
+```
+
+A practical troubleshooting flow for this setup is:
+
+```text
+Website Not Accessible
+        ↓
+Check Nginx status
+        ↓
+Check listening port
+        ↓
+Check cloud security rules
+        ↓
+Test locally with curl
+        ↓
+Test using public IP
+        ↓
+Check Nginx access/error logs
+```
+
+Useful additional checks:
+
+```bash
+ss -tuln | grep :80
+```
+
+```bash
+sudo systemctl status nginx
+```
+
+```bash
+curl -I http://localhost
+```
+
+```bash
+curl -I http://<YOUR_PUBLIC_IP>
+```
+
+---
+
+# Final Learning
+
+> **Today I deployed a Linux cloud server, connected through SSH, installed Docker and Nginx, configured network access, verified the Nginx web server locally and from the internet, and collected logs for troubleshooting and analysis.**
+
