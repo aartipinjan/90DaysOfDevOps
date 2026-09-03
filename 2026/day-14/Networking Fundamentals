@@ -1,0 +1,550 @@
+# Day 14 – Networking Fundamentals & Hands-on Checks
+
+## Objective
+
+Practice basic networking commands and understand how the OSI and TCP/IP models relate to real-world network troubleshooting.
+
+---
+
+# Part 1 – Networking Concepts
+
+## OSI Model vs TCP/IP Model
+
+### OSI Model
+
+| Layer | Name         | Purpose                                              |
+| ----: | ------------ | ---------------------------------------------------- |
+|     7 | Application  | Provides network services to applications            |
+|     6 | Presentation | Handles data formatting, encryption, and compression |
+|     5 | Session      | Establishes and manages communication sessions       |
+|     4 | Transport    | Provides TCP/UDP communication                       |
+|     3 | Network      | Handles IP addressing and routing                    |
+|     2 | Data Link    | Handles MAC addresses and frames                     |
+|     1 | Physical     | Handles physical transmission of bits                |
+
+### TCP/IP Model
+
+| TCP/IP Layer | Examples              |
+| ------------ | --------------------- |
+| Application  | HTTP, HTTPS, DNS, SSH |
+| Transport    | TCP, UDP              |
+| Internet     | IP, ICMP              |
+| Link         | Ethernet, Wi-Fi       |
+
+### In My Own Words
+
+The **OSI model** has seven layers and is mainly used as a conceptual model for understanding networking.
+
+The **TCP/IP model** has fewer layers and is the practical networking model used by modern networked systems.
+
+---
+
+# Where Protocols Fit
+
+* **IP** → Network / Internet layer
+* **TCP/UDP** → Transport layer
+* **HTTP/HTTPS** → Application layer
+* **DNS** → Application layer
+* **ICMP** → Internet / Network layer
+
+### Real Example
+
+```text
+curl https://example.com
+        ↓
+     HTTPS
+        ↓
+      TCP
+        ↓
+       IP
+        ↓
+Network Interface
+```
+
+`curl https://example.com` is an application-layer request that uses lower networking layers underneath it.
+
+---
+
+# Part 2 – Hands-on Network Checks
+
+## Target Host
+
+For this practice I used:
+
+```text
+google.com
+```
+
+---
+
+# 1. Identity – Check IP Address
+
+### Command
+
+```bash
+hostname -I
+```
+
+### Output
+
+```text
+172.31.42.70
+```
+
+### Observation
+
+The command displayed the IP address assigned to my system.
+
+---
+
+# 2. Reachability – Ping
+
+### Command
+
+```bash
+ping google.com
+```
+
+### Output
+
+```text
+PING google.com (142.251.34.206) 56(84) bytes of data.
+64 bytes from qro02s27-in-f14.1e100.net (142.251.34.206): icmp_seq=1 ttl=117 time=7.43 ms
+64 bytes from qro02s27-in-f14.1e100.net (142.251.34.206): icmp_seq=2 ttl=117 time=7.46 ms
+64 bytes from qro02s27-in-f14.1e100.net (142.251.34.206): icmp_seq=3 ttl=113 time=7.47 ms
+```
+
+### Observation
+
+The target was reachable with approximately **7.4 ms latency** in the recorded responses.
+
+No packet loss was observed in the displayed responses.
+
+### Key Learning
+
+`ping` can be used to test basic IP-level reachability, but a successful ping does not guarantee that a specific application or TCP port is working.
+
+---
+
+# 3. Path – Traceroute
+
+### Command
+
+```bash
+traceroute google.com
+```
+
+### Observation
+
+Traceroute displayed the network hops between my machine and the target.
+
+Some hops returned:
+
+```text
+* * *
+```
+
+This can happen when an intermediate router does not respond to traceroute probes or filters them.
+
+The trace ultimately reached the Google destination.
+
+---
+
+# 4. Ports – Listening Services
+
+### Command
+
+```bash
+ss -tulpn
+```
+
+### Output
+
+```text
+Netid       State        Recv-Q       Send-Q                 Local Address:Port               Peer Address:Port
+udp         UNCONN       0            0                          127.0.0.1:323                     0.0.0.0:*
+udp         UNCONN       0            0                         127.0.0.54:53                      0.0.0.0:*
+udp         UNCONN       0            0                      127.0.0.53%lo:53                      0.0.0.0:*
+udp         UNCONN       0            0                  172.31.42.70%ens5:68                      0.0.0.0:*
+udp         UNCONN       0            0                              [::1]:323                        [::]:*
+tcp         LISTEN       0            4096                      127.0.0.54:53                      0.0.0.0:*
+tcp         LISTEN       0            4096                   127.0.0.53%lo:53                      0.0.0.0:*
+tcp         LISTEN       0            4096                         0.0.0.0:22                      0.0.0.0:*
+tcp         LISTEN       0            4096                            [::]:22                         [::]:*
+```
+
+### Observation
+
+The command displayed services currently listening on TCP and UDP ports.
+
+### Example
+
+```text
+Port: 22
+Service: SSH
+```
+
+This confirmed that SSH is listening on port `22`.
+
+---
+
+# 5. Name Resolution – DNS
+
+### Command
+
+```bash
+dig google.com
+```
+
+### Output
+
+```text
+; <<>> DiG 9.20.18-1ubuntu2.1-Ubuntu <<>> google.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 50418
+;; flags: qr rd ra; QUERY: 1, ANSWER: 1, AUTHORITY: 0, ADDITIONAL: 1
+
+;; QUESTION SECTION:
+;google.com.            IN      A
+
+;; ANSWER SECTION:
+google.com.        242    IN    A    142.251.46.78
+
+;; Query time: 2 msec
+;; SERVER: 127.0.0.53#53(127.0.0.53) (UDP)
+```
+
+### Observation
+
+DNS successfully resolved `google.com` to an IP address.
+
+The response status was:
+
+```text
+NOERROR
+```
+
+which indicates that the DNS query completed successfully.
+
+---
+
+# 6. HTTPS Check
+
+### Command
+
+```bash
+curl -I https://google.com
+```
+
+### Output
+
+```text
+HTTP/2 301
+location: https://www.google.com/
+content-type: text/html; charset=UTF-8
+server: gws
+```
+
+### Observation
+
+The HTTPS request successfully reached Google and returned:
+
+```text
+HTTP/2 301
+```
+
+A `301` response indicates a permanent redirect from:
+
+```text
+https://google.com
+```
+
+to:
+
+```text
+https://www.google.com/
+```
+
+### Key Learning
+
+A successful `curl` response confirms that DNS resolution, network connectivity, TCP/TLS communication, and the HTTP/HTTPS service path were working for this request.
+
+---
+
+# 7. Connections Snapshot
+
+### Command
+
+```bash
+netstat -an | head
+```
+
+### Output
+
+```text
+Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State
+tcp        0      0 127.0.0.54:53           0.0.0.0:*               LISTEN
+tcp        0      0 127.0.0.53:53           0.0.0.0:*               LISTEN
+tcp        0      0 0.0.0.0:22              0.0.0.0:*               LISTEN
+tcp        0    760 172.31.42.70:22         122.161.69.202:21269    ESTABLISHED
+tcp        0      0 172.31.42.70:41904      54.218.137.160:80       TIME_WAIT
+tcp        0      0 172.31.42.70:22         85.217.140.54:45303     SYN_RECV
+tcp6       0      0 :::22                   :::*                    LISTEN
+udp        0      0 127.0.0.1:323           0.0.0.0:*
+```
+
+### Observation
+
+The command displayed listening and active network connections.
+
+The output showed:
+
+* SSH listening on port `22`
+* An established SSH connection
+* A connection in `TIME_WAIT`
+* A connection in `SYN_RECV`
+
+### Key Learning
+
+`netstat` and `ss` can be used to understand listening services and current network connection states.
+
+---
+
+# Part 3 – Mini Task: Port Probe
+
+## Step 1 – Identify a Listening Port
+
+From `ss -tulpn`, I identified:
+
+```text
+Port: 22
+Service: SSH
+```
+
+---
+
+## Step 2 – Test the Port
+
+### Command
+
+```bash
+nc -zv localhost 22
+```
+
+### Output
+
+```text
+Connection to localhost (127.0.0.1) 22 port [tcp/ssh] succeeded!
+```
+
+### Observation
+
+The SSH port was reachable locally.
+
+---
+
+## Step 3 – Next Check
+
+If the port is not reachable, I would check the service:
+
+```bash
+systemctl status <service>
+```
+
+Then verify the listening socket:
+
+```bash
+ss -tulpn
+```
+
+And check the firewall:
+
+```bash
+sudo ufw status
+```
+
+---
+
+# Reflection
+
+## Which Command Gives the Fastest Signal When Something Is Broken?
+
+I would start with:
+
+```bash
+ping <target>
+```
+
+for basic network reachability.
+
+For a web application, I would use:
+
+```bash
+curl -I <URL>
+```
+
+because it quickly tells me whether the HTTP/HTTPS service is responding.
+
+### Important
+
+A successful `ping` does not prove that a particular application port is accessible.
+
+---
+
+# What Layer Would I Inspect if DNS Fails?
+
+I would investigate the **Application layer**, because DNS is generally classified at the application layer.
+
+I would check DNS configuration and test resolution using:
+
+```bash
+dig google.com
+```
+
+or:
+
+```bash
+nslookup google.com
+```
+
+---
+
+# What Layer Would I Inspect if HTTP 500 Appears?
+
+HTTP `500` means the server encountered an internal error while processing the request.
+
+I would investigate the **Application layer** and then review application and service logs.
+
+---
+
+# Two Follow-up Checks in a Real Incident
+
+## 1. Check Service Status
+
+```bash
+systemctl status <service>
+```
+
+## 2. Check Service Logs
+
+```bash
+journalctl -u <service> -n 50
+```
+
+---
+
+# Networking Troubleshooting Flow
+
+```text
+                 Network Problem
+                        |
+                        v
+                 Check IP Address
+                        |
+                        v
+                    ping
+                        |
+                        v
+                 Check DNS
+                  dig / nslookup
+                        |
+                        v
+                Check Route/Path
+                  traceroute
+                        |
+                        v
+                Check Listening Port
+                       ss
+                        |
+                        v
+                 Test Application
+                     curl
+                        |
+                        v
+                 Check Service
+                   systemctl
+                        |
+                        v
+                   Check Logs
+                  journalctl
+```
+
+---
+
+# Commands Practiced
+
+```bash
+hostname -I
+
+ping google.com
+
+traceroute google.com
+
+ss -tulpn
+
+dig google.com
+
+curl -I https://google.com
+
+netstat -an | head
+
+nc -zv localhost 22
+```
+
+---
+
+# What I Learned
+
+1. Networking troubleshooting can be approached systematically, starting with basic connectivity and moving toward DNS, routing, ports, and applications.
+
+2. `ping`, `traceroute`, `dig`, `ss`, `netstat`, `nc`, and `curl` provide different types of information and should be used for different troubleshooting questions.
+
+3. A successful network connection does not always mean the application is healthy.
+
+4. DNS resolution, network reachability, TCP ports, HTTP responses, service status, and application logs may need to be checked separately.
+
+5. The OSI and TCP/IP models help organize troubleshooting by understanding where a problem may exist.
+
+---
+
+# Key Takeaways
+
+```text
+ping
+↓
+Basic reachability
+
+dig / nslookup
+↓
+DNS resolution
+
+traceroute
+↓
+Network path
+
+ss / netstat
+↓
+Ports and connections
+
+nc
+↓
+TCP port connectivity
+
+curl
+↓
+HTTP/HTTPS application test
+
+systemctl
+↓
+Service health
+
+journalctl
+↓
+Service logs
+```
+
+### Final Learning
+
+> **Today I learned how to approach network troubleshooting step by step using Linux commands. I practiced checking IP addresses, connectivity, routing, DNS resolution, listening ports, TCP connectivity, and HTTP/HTTPS responses.**
