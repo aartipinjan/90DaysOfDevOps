@@ -1,0 +1,2631 @@
+# Day 28 – DevOps Revision: Days 01–27
+
+> **90 Days of DevOps – Personal Revision Reference**
+>
+> This revision consolidates the commands, concepts, troubleshooting flows, and hands-on topics practiced during **Days 01–27**.
+>
+> **Purpose:** Quick revision before hands-on practice, troubleshooting, interviews, and real DevOps work.
+
+---
+
+# 1. DevOps & Cloud Fundamentals – Day 01
+
+## What is DevOps?
+
+DevOps is a combination of **practices, culture, automation, and tools** that helps development and operations teams deliver software faster and more reliably.
+
+### Core DevOps Lifecycle
+
+```text
+Plan
+  ↓
+Code
+  ↓
+Build
+  ↓
+Test
+  ↓
+Release
+  ↓
+Deploy
+  ↓
+Operate
+  ↓
+Monitor
+  ↺
+```
+
+### Important DevOps Concepts
+
+| Concept                  | Tools / Examples                 |
+| ------------------------ | -------------------------------- |
+| Version Control          | Git / GitHub                     |
+| CI                       | Continuous Integration           |
+| CD                       | Continuous Delivery / Deployment |
+| Infrastructure as Code   | Terraform                        |
+| Containers               | Docker                           |
+| Container Orchestration  | Kubernetes                       |
+| Configuration Management | Ansible                          |
+| Monitoring               | Prometheus / Grafana             |
+| Cloud                    | AWS / Azure / OCI                |
+| Automation               | Shell / Python                   |
+
+---
+
+# 2. Linux Fundamentals – Days 02–07
+
+## Linux Architecture
+
+```text
+Users
+  ↓
+Applications / Shell
+  ↓
+System Libraries
+  ↓
+Linux Kernel
+  ↓
+Hardware
+```
+
+The Linux kernel manages:
+
+* CPU
+* Memory
+* Processes
+* Filesystems
+* Networking
+* Devices
+
+---
+
+# 3. Linux Navigation Commands
+
+### Current Directory
+
+```bash
+pwd
+```
+
+### List Files
+
+```bash
+ls
+ls -l
+ls -la
+ls -lh
+```
+
+### Change Directory
+
+```bash
+cd /path
+cd ..
+cd ~
+cd -
+```
+
+### Create Directory
+
+```bash
+mkdir directory
+mkdir -p parent/child
+```
+
+### Create File
+
+```bash
+touch file.txt
+```
+
+### Copy
+
+```bash
+cp source.txt destination.txt
+cp -r source_dir destination_dir
+```
+
+### Move / Rename
+
+```bash
+mv old.txt new.txt
+mv file.txt /tmp/
+```
+
+### Delete
+
+```bash
+rm file.txt
+rm -r directory
+```
+
+> ⚠️ Be extremely careful with:
+>
+> ```bash
+> rm -rf directory
+> ```
+
+---
+
+# 4. Reading Files
+
+```bash
+cat file.txt
+less file.txt
+
+head file.txt
+head -n 5 file.txt
+
+tail file.txt
+tail -n 5 file.txt
+tail -f app.log
+
+wc -l file.txt
+wc -w file.txt
+wc -c file.txt
+```
+
+| Command   | Purpose                        |
+| --------- | ------------------------------ |
+| `cat`     | Read file                      |
+| `less`    | Read large files interactively |
+| `head`    | Show beginning                 |
+| `tail`    | Show end                       |
+| `tail -f` | Follow changing logs           |
+| `wc`      | Count lines, words, characters |
+
+---
+
+# 5. File Creation & Redirection – Day 06
+
+### Create Empty File
+
+```bash
+touch notes.txt
+```
+
+### Write / Overwrite
+
+```bash
+echo "Line 1" > notes.txt
+```
+
+### Append
+
+```bash
+echo "Line 2" >> notes.txt
+```
+
+### Write and Display
+
+```bash
+echo "Line 3" | tee -a notes.txt
+```
+
+### Read
+
+```bash
+cat notes.txt
+```
+
+### Remember
+
+```text
+>   → overwrite
+>>  → append
+```
+
+---
+
+# 6. Linux Filesystem Hierarchy – Day 07
+
+| Directory  | Purpose                           |
+| ---------- | --------------------------------- |
+| `/`        | Root of the entire filesystem     |
+| `/home`    | Normal users' home directories    |
+| `/root`    | Root user's home directory        |
+| `/etc`     | System/application configuration  |
+| `/var`     | Variable data                     |
+| `/var/log` | System/application logs           |
+| `/tmp`     | Temporary files                   |
+| `/bin`     | Essential binaries                |
+| `/usr/bin` | User command binaries             |
+| `/opt`     | Optional/third-party applications |
+
+Useful commands:
+
+```bash
+ls -la ~
+ls -l /etc
+ls -l /var/log
+cat /etc/hostname
+```
+
+Find large logs:
+
+```bash
+du -sh /var/log/* 2>/dev/null | sort -h | tail -5
+```
+
+---
+
+# 7. Processes – Days 04–05
+
+### List Processes
+
+```bash
+ps
+ps aux
+```
+
+### Live Monitoring
+
+```bash
+top
+```
+
+If installed:
+
+```bash
+htop
+```
+
+### Find Process
+
+```bash
+pgrep nginx
+```
+
+### Process Details
+
+```bash
+ps -o pid,pcpu,pmem,comm -p <PID>
+```
+
+### Terminate Process
+
+```bash
+kill <PID>
+```
+
+Force termination only when necessary:
+
+```bash
+kill -9 <PID>
+```
+
+### Background Process
+
+```bash
+command &
+```
+
+### Shell Jobs
+
+```bash
+jobs
+fg
+bg
+```
+
+---
+
+# 8. Services / systemd – Days 04–05 & 07
+
+### Check Status
+
+```bash
+systemctl status nginx
+```
+
+### Start
+
+```bash
+sudo systemctl start nginx
+```
+
+### Stop
+
+```bash
+sudo systemctl stop nginx
+```
+
+### Restart
+
+```bash
+sudo systemctl restart nginx
+```
+
+### Enable at Boot
+
+```bash
+sudo systemctl enable nginx
+```
+
+### Disable at Boot
+
+```bash
+sudo systemctl disable nginx
+```
+
+### Check Enabled State
+
+```bash
+systemctl is-enabled nginx
+```
+
+### List Services
+
+```bash
+systemctl list-units --type=service
+```
+
+---
+
+# 9. Logs
+
+### systemd Service Logs
+
+```bash
+journalctl -u nginx
+```
+
+Last 50 lines:
+
+```bash
+journalctl -u nginx -n 50
+```
+
+Follow logs:
+
+```bash
+journalctl -u nginx -f
+```
+
+### Traditional Logs
+
+```bash
+tail -n 50 /var/log/<file>.log
+tail -f /var/log/<file>.log
+```
+
+## Service Troubleshooting Flow
+
+```text
+Service Issue
+     ↓
+systemctl status <service>
+     ↓
+journalctl -u <service> -n 50
+     ↓
+Check Process
+     ↓
+Check CPU / Memory / Disk
+     ↓
+Check Network
+     ↓
+Restart if Appropriate
+     ↓
+Verify Again
+```
+
+---
+
+# 10. CPU, Memory & Disk – Day 05
+
+### CPU / Processes
+
+```bash
+top
+ps aux --sort=-%cpu | head -10
+```
+
+### Memory
+
+```bash
+free -h
+```
+
+On macOS:
+
+```bash
+vm_stat
+```
+
+### Disk Space
+
+```bash
+df -h
+```
+
+### Directory Size
+
+```bash
+du -sh /var/log
+du -sh *
+```
+
+### I/O
+
+```bash
+iostat
+vmstat
+```
+
+---
+
+# 11. Networking Fundamentals – Days 14–15
+
+## IP Information
+
+```bash
+ip addr show
+hostname -I
+```
+
+On macOS:
+
+```bash
+ifconfig
+```
+
+## Reachability
+
+```bash
+ping google.com
+```
+
+## Route / Path
+
+```bash
+traceroute google.com
+```
+
+## DNS
+
+```bash
+dig google.com
+nslookup google.com
+```
+
+## HTTP
+
+```bash
+curl -I https://example.com
+```
+
+## Listening Ports
+
+```bash
+ss -tulpn
+```
+
+Alternative:
+
+```bash
+netstat -tulpn
+```
+
+Connection snapshot:
+
+```bash
+netstat -an | head
+```
+
+## Port Probe
+
+```bash
+nc -zv localhost 8080
+```
+
+---
+
+# 12. Networking Concepts
+
+## OSI Model
+
+```text
+L7 Application
+L6 Presentation
+L5 Session
+L4 Transport
+L3 Network
+L2 Data Link
+L1 Physical
+```
+
+## TCP/IP Model
+
+```text
+Application
+Transport
+Internet
+Link
+```
+
+### Protocol Placement
+
+| Protocol     | Layer              |
+| ------------ | ------------------ |
+| HTTP / HTTPS | Application        |
+| DNS          | Application        |
+| TCP / UDP    | Transport          |
+| IP           | Internet / Network |
+| Ethernet     | Link / Data Link   |
+
+Example:
+
+```text
+curl https://example.com
+        ↓
+      HTTP
+        ↓
+       TCP
+        ↓
+       IP
+        ↓
+Network Interface
+```
+
+---
+
+# 13. DNS
+
+| Record | Meaning                   |
+| ------ | ------------------------- |
+| A      | IPv4 address              |
+| AAAA   | IPv6 address              |
+| CNAME  | Alias to another hostname |
+| MX     | Mail server               |
+| NS     | Authoritative nameserver  |
+
+Basic check:
+
+```bash
+dig google.com
+```
+
+---
+
+# 14. IP Addressing
+
+Example:
+
+```text
+192.168.1.10
+```
+
+IPv4 contains four octets.
+
+### Private IPv4 Ranges
+
+```text
+10.0.0.0/8
+172.16.0.0/12
+192.168.0.0/16
+```
+
+Public IP addresses are routable over the public Internet.
+
+---
+
+# 15. CIDR & Subnetting
+
+Example:
+
+```text
+192.168.1.0/24
+```
+
+`/24` means the first 24 bits represent the network portion.
+
+| CIDR  | Mask              | Total IPs | Typical Usable Hosts |
+| ----- | ----------------- | --------: | -------------------: |
+| `/24` | `255.255.255.0`   |       256 |                  254 |
+| `/16` | `255.255.0.0`     |    65,536 |               65,534 |
+| `/28` | `255.255.255.240` |        16 |                   14 |
+
+Subnetting helps divide a network into smaller logical networks.
+
+---
+
+# 16. Common Ports
+
+|  Port | Service |
+| ----: | ------- |
+|    22 | SSH     |
+|    80 | HTTP    |
+|   443 | HTTPS   |
+|    53 | DNS     |
+|  3306 | MySQL   |
+|  6379 | Redis   |
+| 27017 | MongoDB |
+
+---
+
+# 17. Cloud Server & Web Deployment – Day 08
+
+Typical workflow:
+
+```text
+Launch Cloud Server
+       ↓
+Configure Security Group
+       ↓
+SSH into Server
+       ↓
+Update Packages
+       ↓
+Install Docker / Nginx
+       ↓
+Start Service
+       ↓
+Open Required Port
+       ↓
+Test from Browser
+       ↓
+Check Logs
+```
+
+SSH:
+
+```bash
+ssh -i key.pem ubuntu@<server-ip>
+```
+
+Copy file:
+
+```bash
+scp -i key.pem ubuntu@<server-ip>:~/nginx-logs.txt .
+```
+
+Nginx:
+
+```bash
+sudo systemctl status nginx
+```
+
+Common Nginx logs:
+
+```text
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+```
+
+---
+
+# 18. Users & Groups – Day 09
+
+### Create User
+
+```bash
+sudo useradd -m tokyo
+```
+
+### Set Password
+
+```bash
+sudo passwd tokyo
+```
+
+### Create Group
+
+```bash
+sudo groupadd developers
+```
+
+### Add User to Group
+
+```bash
+sudo usermod -aG developers tokyo
+```
+
+### Add Multiple Groups
+
+```bash
+sudo usermod -aG developers,admins berlin
+```
+
+### Check User
+
+```bash
+id tokyo
+groups tokyo
+```
+
+### Check Users
+
+```bash
+cat /etc/passwd
+ls -la /home
+```
+
+### Check Groups
+
+```bash
+cat /etc/group
+```
+
+### Run Command as Another User
+
+```bash
+sudo -u tokyo command
+```
+
+---
+
+# 19. File Permissions – Day 10
+
+Permission format:
+
+```text
+rwxrwxrwx
+│  │  │
+│  │  └── Others
+│  └───── Group
+└──────── Owner
+```
+
+Values:
+
+```text
+r = 4
+w = 2
+x = 1
+```
+
+### Example: 755
+
+```text
+Owner  = rwx = 7
+Group  = r-x = 5
+Others = r-x = 5
+```
+
+Check:
+
+```bash
+ls -l
+```
+
+Make executable:
+
+```bash
+chmod +x script.sh
+```
+
+Numeric permissions:
+
+```bash
+chmod 755 script.sh
+chmod 640 notes.txt
+```
+
+Remove write permission:
+
+```bash
+chmod -w file.txt
+```
+
+---
+
+# 20. Ownership – Day 11
+
+### Check Ownership
+
+```bash
+ls -l file.txt
+```
+
+### Change Owner
+
+```bash
+sudo chown tokyo file.txt
+```
+
+### Change Group
+
+```bash
+sudo chgrp heist-team file.txt
+```
+
+### Change Both
+
+```bash
+sudo chown professor:heist-team project-config.yaml
+```
+
+### Recursive Ownership
+
+```bash
+sudo chown -R professor:planners heist-project/
+```
+
+---
+
+# 21. LVM – Day 13
+
+## LVM Architecture
+
+```text
+Physical Disk
+     ↓
+Physical Volume (PV)
+     ↓
+Volume Group (VG)
+     ↓
+Logical Volume (LV)
+     ↓
+Filesystem
+     ↓
+Mount Point
+```
+
+### Check Storage
+
+```bash
+lsblk
+pvs
+vgs
+lvs
+df -h
+```
+
+### Create PV
+
+```bash
+sudo pvcreate /dev/sdb
+```
+
+### Create VG
+
+```bash
+sudo vgcreate devops-vg /dev/sdb
+```
+
+### Create LV
+
+```bash
+sudo lvcreate -L 500M -n app-data devops-vg
+```
+
+### Format
+
+```bash
+sudo mkfs.ext4 /dev/devops-vg/app-data
+```
+
+### Create Mount Point
+
+```bash
+sudo mkdir -p /mnt/app-data
+```
+
+### Mount
+
+```bash
+sudo mount /dev/devops-vg/app-data /mnt/app-data
+```
+
+### Verify
+
+```bash
+df -h /mnt/app-data
+```
+
+### Extend LV
+
+```bash
+sudo lvextend -L +200M /dev/devops-vg/app-data
+```
+
+Extend LV and resize filesystem where supported:
+
+```bash
+sudo lvextend -r -L +200M /dev/devops-vg/app-data
+```
+
+For ext4:
+
+```bash
+sudo resize2fs /dev/devops-vg/app-data
+```
+
+> ⚠️ Always verify the target device before storage-changing operations:
+>
+> ```bash
+> lsblk
+> ```
+
+---
+
+# 22. Shell Scripting Basics – Day 16
+
+## Basic Script
+
+```bash
+#!/bin/bash
+
+echo "Hello, DevOps!"
+```
+
+Make executable:
+
+```bash
+chmod +x hello.sh
+```
+
+Run:
+
+```bash
+./hello.sh
+```
+
+### Variables
+
+```bash
+NAME="Aarti"
+ROLE="DevOps Engineer"
+
+echo "Hello, I am $NAME and I am a $ROLE"
+```
+
+### Input
+
+```bash
+read -p "Enter name: " NAME
+echo "Hello $NAME"
+```
+
+### Condition
+
+```bash
+if [ "$NUMBER" -gt 0 ]; then
+    echo "Positive"
+elif [ "$NUMBER" -lt 0 ]; then
+    echo "Negative"
+else
+    echo "Zero"
+fi
+```
+
+### File Check
+
+```bash
+if [ -f "$FILE" ]; then
+    echo "File exists"
+else
+    echo "File does not exist"
+fi
+```
+
+---
+
+# 23. Shell Loops & Arguments – Day 17
+
+### For Loop
+
+```bash
+for fruit in apple banana mango orange grape; do
+    echo "$fruit"
+done
+```
+
+### Count
+
+```bash
+for i in {1..10}; do
+    echo "$i"
+done
+```
+
+### While Loop
+
+```bash
+COUNT=5
+
+while [ "$COUNT" -ge 0 ]; do
+    echo "$COUNT"
+    COUNT=$((COUNT - 1))
+done
+```
+
+### Script Arguments
+
+```bash
+echo "$0"
+echo "$1"
+echo "$#"
+echo "$@"
+```
+
+### Check Root
+
+```bash
+if [ "$EUID" -ne 0 ]; then
+    echo "Run as root"
+    exit 1
+fi
+```
+
+### Package Check
+
+```bash
+dpkg -s curl
+```
+
+---
+
+# 24. Shell Functions & Strict Mode – Day 18
+
+### Function
+
+```bash
+greet() {
+    echo "Hello, $1!"
+}
+
+greet "Aarti"
+```
+
+### Addition
+
+```bash
+add() {
+    echo $(( $1 + $2 ))
+}
+
+add 10 20
+```
+
+### Local Variable
+
+```bash
+demo() {
+    local MESSAGE="Hello"
+    echo "$MESSAGE"
+}
+```
+
+### Strict Mode
+
+```bash
+set -euo pipefail
+```
+
+| Option     | Meaning                         |
+| ---------- | ------------------------------- |
+| `-e`       | Exit when a command fails       |
+| `-u`       | Error on unset variables        |
+| `pipefail` | Catch failures inside pipelines |
+
+### Debugging
+
+```bash
+set -x
+```
+
+### Exit Status
+
+```bash
+echo $?
+```
+
+---
+
+# 25. Shell Text Processing – Days 19–21
+
+## grep
+
+```bash
+grep "ERROR" app.log
+grep -i "error" app.log
+grep -n "ERROR" app.log
+grep -c "ERROR" app.log
+grep -r "ERROR" /var/log
+grep -v "INFO" app.log
+grep -E "ERROR|Failed" app.log
+```
+
+## awk
+
+```bash
+awk '{print $1}' file.txt
+awk '{print $1, $3}' file.txt
+awk -F: '{print $1}' /etc/passwd
+```
+
+## sed
+
+Replace:
+
+```bash
+sed 's/old/new/g' file.txt
+```
+
+Delete matching lines:
+
+```bash
+sed '/ERROR/d' file.txt
+```
+
+## cut
+
+```bash
+cut -d: -f1 /etc/passwd
+```
+
+## sort
+
+```bash
+sort file.txt
+sort -n numbers.txt
+sort -r file.txt
+sort -u file.txt
+```
+
+## uniq
+
+```bash
+uniq file.txt
+uniq -c file.txt
+```
+
+## tr
+
+```bash
+echo "hello" | tr 'a-z' 'A-Z'
+```
+
+---
+
+# 26. Log Rotation & Backup – Day 19
+
+### Find Old Logs
+
+```bash
+find /path -name "*.log" -mtime +7
+```
+
+### Compress
+
+```bash
+find /path -name "*.log" -mtime +7 -exec gzip {} \;
+```
+
+### Delete Old Compressed Logs
+
+```bash
+find /path -name "*.gz" -mtime +30 -delete
+```
+
+### Timestamp
+
+```bash
+date +%Y-%m-%d
+```
+
+### Create Backup
+
+```bash
+tar -czf backup.tar.gz /source/dir
+```
+
+### Check Archive
+
+```bash
+ls -lh backup.tar.gz
+```
+
+---
+
+# 27. Crontab – Day 19
+
+### List Cron Jobs
+
+```bash
+crontab -l
+```
+
+### Edit Cron
+
+```bash
+crontab -e
+```
+
+### Cron Format
+
+```text
+* * * * * command
+│ │ │ │ │
+│ │ │ │ └── Day of week
+│ │ │ └──── Month
+│ │ └────── Day of month
+│ └──────── Hour
+└────────── Minute
+```
+
+### Every Day at 2 AM
+
+```cron
+0 2 * * * /path/to/log_rotate.sh
+```
+
+### Every Sunday at 3 AM
+
+```cron
+0 3 * * 0 /path/to/backup.sh
+```
+
+### Every 5 Minutes
+
+```cron
+*/5 * * * * /path/to/health_check.sh
+```
+
+---
+
+# 28. Log Analyzer – Day 20
+
+### Count Errors
+
+```bash
+grep -Ei "ERROR|Failed" "$LOG_FILE" | wc -l
+```
+
+### Critical Events
+
+```bash
+grep -n "CRITICAL" "$LOG_FILE"
+```
+
+### Top Error Messages
+
+```bash
+grep "ERROR" app.log |
+awk '{$1=$2=$3=""; print}' |
+sort |
+uniq -c |
+sort -rn |
+head -5
+```
+
+### Generate Report
+
+```bash
+DATE=$(date +%Y-%m-%d)
+REPORT="log_report_${DATE}.txt"
+```
+
+```bash
+cat > "$REPORT" << EOF
+Log Analysis Report
+===================
+EOF
+```
+
+---
+
+# 29. Git Fundamentals – Day 22
+
+### Check Git
+
+```bash
+git --version
+```
+
+### Configure Identity
+
+```bash
+git config --global user.name "Aarti"
+git config --global user.email "your-email@example.com"
+```
+
+### View Configuration
+
+```bash
+git config --list
+```
+
+### Initialize Repository
+
+```bash
+git init
+```
+
+### Check Status
+
+```bash
+git status
+```
+
+### Stage
+
+```bash
+git add file.txt
+git add .
+```
+
+### Commit
+
+```bash
+git commit -m "meaningful message"
+```
+
+### History
+
+```bash
+git log
+git log --oneline
+git log --oneline --graph --all
+```
+
+### Changes
+
+```bash
+git diff
+```
+
+---
+
+# 30. Git Working Areas
+
+Git can be understood through three main areas:
+
+```text
+Working Directory
+       ↓ git add
+Staging Area
+       ↓ git commit
+Repository
+```
+
+### Working Directory
+
+Files currently being edited.
+
+### Staging Area
+
+Changes selected for the next commit.
+
+### Repository
+
+Committed Git history stored in `.git`.
+
+---
+
+# 31. Git Branching – Days 23–24
+
+### List Branches
+
+```bash
+git branch
+```
+
+### Create Branch
+
+```bash
+git branch feature-login
+```
+
+### Create & Switch
+
+```bash
+git checkout -b feature-login
+```
+
+### Modern Command
+
+```bash
+git switch feature-login
+```
+
+### Create & Switch with `switch`
+
+```bash
+git switch -c feature-login
+```
+
+### Switch Back
+
+```bash
+git checkout master
+```
+
+### Delete Local Branch
+
+```bash
+git branch -d feature-login
+```
+
+---
+
+# 32. Git Remote & GitHub
+
+### Check Remotes
+
+```bash
+git remote -v
+```
+
+### Add Remote
+
+```bash
+git remote add origin git@github.com:username/repo.git
+```
+
+### Push
+
+```bash
+git push origin master
+git push origin main
+```
+
+### Push Feature Branch
+
+```bash
+git push -u origin feature-1
+```
+
+### Pull
+
+```bash
+git pull origin master
+```
+
+### Fetch
+
+```bash
+git fetch origin master
+```
+
+### Merge Fetched Branch
+
+```bash
+git merge origin/master
+```
+
+---
+
+# 33. SSH for GitHub
+
+### Generate SSH Key
+
+```bash
+ssh-keygen
+```
+
+### List SSH Files
+
+```bash
+ls -la ~/.ssh
+```
+
+### View Public Key
+
+```bash
+cat ~/.ssh/id_ed25519.pub
+```
+
+The public key can be added to GitHub SSH settings.
+
+---
+
+# 34. Clone vs Fork
+
+## Clone
+
+Downloads a repository to the local machine.
+
+```bash
+git clone <repository-url>
+```
+
+## Fork
+
+Creates your own GitHub copy of another repository.
+
+### Typical Flow
+
+```text
+Original Repository
+        ↓
+       Fork
+        ↓
+Your GitHub Repository
+        ↓
+      Clone
+        ↓
+Local Machine
+```
+
+---
+
+# 35. Merge & Merge Conflicts – Day 24
+
+### Merge
+
+```bash
+git checkout master
+git merge feature-login
+```
+
+### Fast-Forward
+
+```text
+A---B---C
+        ↑
+      feature
+
+A---B---C
+        ↑
+      master
+```
+
+Git can simply move the target branch pointer forward.
+
+### Merge Commit
+
+```text
+      C---D
+     /     \
+A---B       M
+     \     /
+      E---F
+```
+
+### Conflict
+
+```text
+<<<<<<< HEAD
+current branch
+=======
+incoming branch
+>>>>>>> feature
+```
+
+### Resolve
+
+```bash
+git status
+
+# Edit the conflicted file
+
+git add .
+git commit -m "resolved conflict"
+```
+
+---
+
+# 36. Git Rebase – Day 24
+
+```bash
+git rebase master
+```
+
+Visualize:
+
+```bash
+git log --oneline --graph --all
+```
+
+### Before
+
+```text
+A---B---C       master
+     \
+      D---E     feature
+```
+
+### After
+
+```text
+A---B---C---D'---E'
+```
+
+Rebase replays feature commits on top of another base.
+
+### Important
+
+> Avoid rebasing commits that have already been pushed and shared unless the team explicitly agrees, because rebase rewrites commit history.
+
+---
+
+# 37. Squash Merge
+
+```bash
+git merge feature-profile --squash
+```
+
+Then:
+
+```bash
+git commit -m "add profile feature"
+```
+
+A squash combines multiple feature commits into one change on the target branch.
+
+---
+
+# 38. Git Stash – Day 24
+
+### Save Work
+
+```bash
+git stash
+```
+
+### List Stashes
+
+```bash
+git stash list
+```
+
+### Apply and Remove
+
+```bash
+git stash pop
+```
+
+### Apply and Keep
+
+```bash
+git stash apply
+```
+
+### Specific Stash
+
+```bash
+git stash pop stash@{0}
+```
+
+### Stash with Message
+
+```bash
+git stash push -m "work in progress"
+```
+
+### Remember
+
+```text
+apply → applies stash and keeps it
+pop   → applies stash and removes it if successful
+```
+
+---
+
+# 39. Git Cherry-Pick – Day 24
+
+### View Commits
+
+```bash
+git log --oneline
+```
+
+### Apply Specific Commit
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+### If Conflict Occurs
+
+```bash
+git status
+```
+
+Resolve the file, then:
+
+```bash
+git add .
+git cherry-pick --continue
+```
+
+### Abort
+
+```bash
+git cherry-pick --abort
+```
+
+### Skip
+
+```bash
+git cherry-pick --skip
+```
+
+### Use Case
+
+> Cherry-pick is useful when one specific fix or commit is needed on another branch without merging the entire branch.
+
+---
+
+# 40. Git Reset – Day 25
+
+## Soft
+
+```bash
+git reset --soft <commit>
+```
+
+Moves `HEAD` but keeps changes staged.
+
+## Mixed
+
+```bash
+git reset --mixed <commit>
+```
+
+Moves `HEAD` and unstages changes while keeping working-directory changes.
+
+This is the default:
+
+```bash
+git reset <commit>
+```
+
+## Hard
+
+```bash
+git reset --hard <commit>
+```
+
+Moves `HEAD` and resets the staging area and tracked working-directory changes.
+
+### Quick Comparison
+
+| Reset     | Commit | Staging   | Working Directory |
+| --------- | ------ | --------- | ----------------- |
+| `--soft`  | Reset  | Preserved | Preserved         |
+| `--mixed` | Reset  | Reset     | Preserved         |
+| `--hard`  | Reset  | Reset     | Reset             |
+
+> ⚠️ `--hard` can permanently discard uncommitted tracked changes.
+
+---
+
+# 41. Git Revert – Day 25
+
+```bash
+git revert <commit-hash>
+```
+
+`git revert` creates a **new commit** that reverses the changes introduced by another commit.
+
+### Reset vs Revert
+
+|               | `git reset`         | `git revert`                   |
+| ------------- | ------------------- | ------------------------------ |
+| Purpose       | Move branch pointer | Undo changes with a new commit |
+| History       | Can rewrite history | Preserves existing history     |
+| Shared branch | Risky               | Safer                          |
+| Typical use   | Local/private work  | Shared/pushed work             |
+
+### Easy Memory Trick
+
+```text
+RESET  → Rewrite / move history
+REVERT → New commit that undoes changes
+```
+
+---
+
+# 42. Git Reflog
+
+```bash
+git reflog
+```
+
+Shows movements of `HEAD` and branch references.
+
+Useful for finding previous `HEAD` positions after operations such as:
+
+```bash
+git reset --hard
+```
+
+> **Reflog is an important Git safety net.**
+
+---
+
+# 43. Branching Strategies – Day 25
+
+## GitFlow
+
+```text
+main
+develop
+feature/*
+release/*
+hotfix/*
+```
+
+Useful for teams with structured release cycles.
+
+## GitHub Flow
+
+```text
+main
+ ↓
+feature branch
+ ↓
+Pull Request
+ ↓
+Review
+ ↓
+Merge
+```
+
+Useful for teams deploying frequently.
+
+## Trunk-Based Development
+
+Developers work around a shared main/trunk with short-lived branches and frequent integration.
+
+---
+
+# 44. GitHub CLI – Day 26
+
+### Authentication
+
+```bash
+gh --version
+gh auth login
+gh auth status
+```
+
+### Repository
+
+```bash
+gh repo create
+gh repo clone <owner>/<repo>
+gh repo view
+gh repo list
+gh repo view --web
+gh repo delete <owner>/<repo>
+```
+
+### Issues
+
+```bash
+gh issue create
+gh issue list
+gh issue view <issue-number>
+gh issue close <issue-number>
+```
+
+### Pull Requests
+
+```bash
+gh pr create
+gh pr create --fill
+gh pr list
+gh pr view <pr-number>
+gh pr checks <pr-number>
+gh pr merge <pr-number>
+```
+
+### Merge Methods
+
+```bash
+gh pr merge <pr-number> --merge
+gh pr merge <pr-number> --squash
+gh pr merge <pr-number> --rebase
+```
+
+---
+
+# 45. GitHub Actions with `gh`
+
+### List Workflow Runs
+
+```bash
+gh run list
+```
+
+### View Workflow Run
+
+```bash
+gh run view <run-id>
+```
+
+### List Workflows
+
+```bash
+gh workflow list
+```
+
+### Run Workflow Manually
+
+When the workflow supports manual triggering:
+
+```bash
+gh workflow run <workflow>
+```
+
+---
+
+# 46. Useful GitHub CLI Tools
+
+### API
+
+```bash
+gh api <endpoint>
+```
+
+### Gist
+
+```bash
+gh gist create file.txt
+```
+
+### Releases
+
+```bash
+gh release list
+```
+
+### Search
+
+```bash
+gh search repos "devops"
+```
+
+### Aliases
+
+```bash
+gh alias list
+```
+
+---
+
+# 47. Common Git Mistakes I Practiced
+
+| Mistake                              | Correct Command     |
+| ------------------------------------ | ------------------- |
+| `git logs`                           | `git log`           |
+| `git log --online`                   | `git log --oneline` |
+| `git addd .`                         | `git add .`         |
+| `git cherr-pick`                     | `git cherry-pick`   |
+| `git pop`                            | `git stash pop`     |
+| `git rebase main` in a `master` repo | `git rebase master` |
+
+### Lesson
+
+> Mistakes during hands-on practice helped me understand Git syntax instead of simply memorizing commands.
+
+---
+
+# 48. DevOps Troubleshooting Cheat Sheet
+
+## Service Down
+
+```bash
+systemctl status <service>
+journalctl -u <service> -n 50
+ps aux | grep <service>
+```
+
+## CPU High
+
+```bash
+top
+ps aux --sort=-%cpu | head -10
+```
+
+## Memory High
+
+```bash
+free -h
+ps aux --sort=-%mem | head -10
+```
+
+## Disk Full
+
+```bash
+df -h
+du -sh *
+du -sh /var/log/* 2>/dev/null | sort -h | tail -5
+```
+
+## Port Not Reachable
+
+```bash
+ss -tulpn
+nc -zv localhost 8080
+curl -I http://localhost:8080
+```
+
+## DNS Problem
+
+```bash
+dig example.com
+nslookup example.com
+```
+
+## Network Reachability
+
+```bash
+ping example.com
+traceroute example.com
+```
+
+## HTTP Check
+
+```bash
+curl -I https://example.com
+```
+
+---
+
+# 49. Common Linux Text-Processing Pipeline
+
+One of the most useful Linux patterns is:
+
+```text
+Command
+   ↓
+ grep
+   ↓
+ awk
+   ↓
+ sort
+   ↓
+ uniq
+   ↓
+ head
+```
+
+Example:
+
+```bash
+grep "ERROR" app.log |
+awk '{print $NF}' |
+sort |
+uniq -c |
+sort -rn |
+head -5
+```
+
+### General Pattern
+
+```text
+Inspect → Filter → Extract → Sort → Count → Interpret
+```
+
+---
+
+# 50. Common File & Permission Workflow
+
+```text
+Create
+  ↓
+ls -l
+  ↓
+chmod
+  ↓
+chown / chgrp
+  ↓
+Test
+  ↓
+Verify
+```
+
+Example:
+
+```bash
+touch script.sh
+chmod +x script.sh
+sudo chown user:group script.sh
+ls -l script.sh
+./script.sh
+```
+
+---
+
+# 51. Common Git Incident Workflow
+
+If a change is wrong:
+
+```bash
+git status
+git log --oneline
+git diff
+```
+
+### Local / Unpublished Commit
+
+```bash
+git reset --soft HEAD~1
+```
+
+### Shared / Pushed Commit
+
+```bash
+git revert <commit>
+```
+
+### Temporarily Save Work
+
+```bash
+git stash
+```
+
+### Need One Specific Commit
+
+```bash
+git cherry-pick <commit>
+```
+
+### Something Appears Lost
+
+```bash
+git reflog
+```
+
+---
+
+# 52. Quick-Fire Interview Answers
+
+### What does `chmod 755 script.sh` do?
+
+```text
+Owner  = rwx = 7
+Group  = r-x = 5
+Others = r-x = 5
+```
+
+It gives the owner read/write/execute permissions and group/others read/execute permissions.
+
+---
+
+### Process vs Service
+
+A **process** is a running instance of a program.
+
+A **service** is usually a long-running background application managed by a service manager such as systemd.
+
+---
+
+### Find Which Process Uses Port 8080
+
+```bash
+ss -tulpn | grep :8080
+```
+
+Another option:
+
+```bash
+lsof -i :8080
+```
+
+---
+
+### What Does `set -euo pipefail` Do?
+
+```text
+-e        → stop on command errors
+-u        → error on unset variables
+pipefail  → detect failures inside pipelines
+```
+
+---
+
+### `git reset --hard` vs `git revert`
+
+```text
+reset --hard → moves history and resets tracked local changes
+revert       → creates a new commit that reverses an earlier commit
+```
+
+---
+
+### What Does `git stash` Do?
+
+It temporarily stores uncommitted changes so the working tree can be cleaned and work can continue on another branch/context.
+
+```bash
+git stash
+git stash pop
+```
+
+---
+
+### `git fetch` vs `git pull`
+
+```text
+git fetch → downloads remote changes without integrating them
+git pull  → fetches and then integrates changes
+```
+
+---
+
+### What is LVM?
+
+LVM stands for **Logical Volume Management**.
+
+```text
+PV → VG → LV → Filesystem → Mount Point
+```
+
+It provides a flexible storage management layer.
+
+---
+
+# 53. Most Important Commands for Daily Practice
+
+## Linux
+
+```bash
+pwd
+ls -la
+cd
+mkdir
+touch
+cp
+mv
+rm
+cat
+less
+head
+tail
+find
+du
+df
+```
+
+## Processes & Services
+
+```bash
+ps
+ps aux
+top
+pgrep
+kill
+
+systemctl status
+systemctl start
+systemctl stop
+systemctl restart
+```
+
+## Logs
+
+```bash
+journalctl
+journalctl -u
+tail -f
+```
+
+## Networking
+
+```bash
+ping
+ip addr
+hostname -I
+traceroute
+dig
+nslookup
+curl
+ss
+nc
+```
+
+## Shell
+
+```bash
+echo
+read
+if
+case
+for
+while
+function
+local
+set
+trap
+```
+
+## Text Processing
+
+```bash
+grep
+awk
+sed
+cut
+sort
+uniq
+tr
+wc
+```
+
+## Automation
+
+```bash
+find
+gzip
+tar
+crontab
+```
+
+## Git
+
+```bash
+git status
+git add
+git commit
+git log
+git diff
+
+git branch
+git checkout
+git switch
+
+git remote
+git push
+git pull
+git fetch
+git clone
+
+git merge
+git rebase
+git stash
+git cherry-pick
+
+git reset
+git revert
+git reflog
+```
+
+## GitHub CLI
+
+```bash
+gh auth status
+gh repo view
+gh repo list
+gh issue create
+gh issue list
+gh pr create
+gh pr list
+gh pr checks
+gh pr merge
+gh run list
+gh workflow list
+```
+
+---
+
+# 54. Commands I Would Reach for First During an Incident
+
+If a production application is reported as down, I should follow a structured troubleshooting process rather than randomly running commands.
+
+```text
+1. Is the server reachable?
+          ↓
+2. Is the service running?
+          ↓
+3. What do the logs say?
+          ↓
+4. Is CPU / memory / disk healthy?
+          ↓
+5. Is the required port listening?
+          ↓
+6. Is network communication working?
+          ↓
+7. What changed recently?
+          ↓
+8. Apply the safest fix
+          ↓
+9. Verify recovery
+```
+
+### First Checks
+
+```bash
+ping <host>
+
+systemctl status <service>
+
+journalctl -u <service> -n 50
+
+top
+
+df -h
+
+ss -tulpn
+
+curl -I <endpoint>
+```
+
+---
+
+# 55. DevOps Troubleshooting Mindset
+
+The goal is not:
+
+```text
+Run commands randomly
+```
+
+The goal is:
+
+```text
+Observe
+  ↓
+Collect Evidence
+  ↓
+Analyze
+  ↓
+Identify Root Cause
+  ↓
+Apply Safest Fix
+  ↓
+Verify
+  ↓
+Document
+```
+
+This is an important mindset for production troubleshooting.
+
+---
+
+# 56. My Git Decision Cheat Sheet
+
+| Situation                  | Command                      |
+| -------------------------- | ---------------------------- |
+| Check repository           | `git status`                 |
+| See unstaged changes       | `git diff`                   |
+| Save work temporarily      | `git stash`                  |
+| Create branch              | `git switch -c feature-name` |
+| Merge branch               | `git merge feature-name`     |
+| Rebase branch              | `git rebase master`          |
+| Combine feature commits    | `git merge --squash`         |
+| Take one commit            | `git cherry-pick <commit>`   |
+| Undo local history         | `git reset`                  |
+| Undo shared/pushed changes | `git revert`                 |
+| Find previous HEAD         | `git reflog`                 |
+| Download remote changes    | `git fetch`                  |
+| Download + integrate       | `git pull`                   |
+| Send commits               | `git push`                   |
+| Create GitHub PR           | `gh pr create`               |
+| Check CI                   | `gh pr checks`               |
+| View workflow runs         | `gh run list`                |
+
+---
+
+# 57. Final Revision Mindset
+
+I do not need to memorize hundreds of commands.
+
+The important skill is to understand:
+
+```text
+What is the current state?
+          ↓
+What is the problem?
+          ↓
+What information do I need?
+          ↓
+Which command gives me that information?
+          ↓
+What does the output tell me?
+          ↓
+What should I do next?
+```
+
+That is the command-line and troubleshooting mindset I want to build as a **DevOps Engineer**.
+
+---
+
+# 58. Day 28 Revision Checklist
+
+## 🐧 Linux
+
+* [x] File navigation
+* [x] File operations
+* [x] Processes
+* [x] systemd services
+* [x] Logs
+* [x] CPU / memory / disk
+* [x] Filesystem hierarchy
+* [x] Users / groups
+* [x] Permissions
+* [x] Ownership
+* [x] LVM
+* [x] Networking
+* [x] DNS
+* [x] IP / CIDR
+* [x] Common ports
+
+## 🐚 Shell Scripting
+
+* [x] Shebang
+* [x] Variables
+* [x] `read`
+* [x] Arguments
+* [x] Conditions
+* [x] Loops
+* [x] Functions
+* [x] `grep`
+* [x] `awk`
+* [x] `sed`
+* [x] `find`
+* [x] `sort`
+* [x] `uniq`
+* [x] Error handling
+* [x] `set -euo pipefail`
+* [x] `trap`
+* [x] Cron
+* [x] Log analysis
+* [x] Backup automation
+
+## 🔀 Git & GitHub
+
+* [x] `git init`
+* [x] `git add`
+* [x] `git commit`
+* [x] `git status`
+* [x] `git diff`
+* [x] `git log`
+* [x] Branching
+* [x] Remote repositories
+* [x] Push
+* [x] Pull
+* [x] Fetch
+* [x] Clone
+* [x] Fork
+* [x] Merge
+* [x] Merge conflicts
+* [x] Rebase
+* [x] Squash
+* [x] Stash
+* [x] Cherry-pick
+* [x] Reset
+* [x] Revert
+* [x] Reflog
+* [x] GitFlow
+* [x] GitHub Flow
+* [x] Trunk-Based Development
+* [x] GitHub CLI
+* [x] GitHub Issues
+* [x] Pull Requests
+* [x] GitHub Actions
+
+---
+
+# 🎯 Day 28 Goal
+
+The goal is not to memorize every command.
+
+The goal is to be able to:
+
+```text
+Understand the Problem
+        ↓
+Choose the Right Command
+        ↓
+Read the Output
+        ↓
+Identify the Next Check
+        ↓
+Fix the Issue Safely
+        ↓
+Verify the Result
+```
+
+> **This is the real command-line skill I want to build as a DevOps Engineer.**
+
+---
+
+# 🚀 Learn in Public
+
+> **28 days completed!**
+>
+> Today I revised my DevOps journey from **Linux and Networking to Shell Scripting, LVM, Git, GitHub, and GitHub CLI**.
+>
+> The focus is no longer just remembering commands — it is understanding **which command to use, why to use it, how to read the output, and how to troubleshoot systematically.**
+
+## 🏆 Day 28 Completed
+
+`#90DaysOfDevOps`
+`#DevOpsKaJosh`
+
