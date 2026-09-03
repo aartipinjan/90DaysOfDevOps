@@ -1,0 +1,1123 @@
+# Day 13 – Linux Volume Management (LVM)
+
+## Objective
+
+Practice Linux Logical Volume Management (LVM) by:
+
+* Checking storage configuration
+* Understanding disks, partitions, and logical volumes
+* Formatting a logical volume
+* Mounting filesystems
+* Extending a logical volume
+* Resizing the filesystem along with the logical volume
+* Working with a separate block device
+
+---
+
+# Task 1 – Check Current Storage
+
+## 1. Check Disk Space
+
+### Command
+
+```bash id="4vop28"
+df -h
+```
+
+### What I Observed
+
+Used `df -h` to check the available and used disk space on mounted filesystems.
+
+---
+
+## 2. List Block Devices
+
+### Command
+
+```bash id="0gzch6"
+lsblk
+```
+
+### What I Observed
+
+`lsblk` displayed the available disks, partitions, logical volumes, and their mount points.
+
+### Key Learning
+
+`lsblk` is useful for understanding the overall block-device and storage hierarchy.
+
+---
+
+# Task 2 – Work with an Existing LVM Volume
+
+I practiced working with the existing LVM setup:
+
+```text
+Volume Group (VG) → tws-vg
+Logical Volume (LV) → tws-lv
+```
+
+---
+
+## Format the Logical Volume
+
+### Command
+
+```bash id="ph5c2p"
+mkfs.ext4 /dev/tws-vg/tws-lv
+```
+
+### What I Observed
+
+The logical volume was formatted with the `ext4` filesystem.
+
+### ⚠️ Important Warning
+
+`mkfs` creates a new filesystem and can destroy existing data on the target device.
+
+Before formatting a production or existing device, always verify the device carefully:
+
+```bash
+lsblk
+```
+
+```bash
+df -h
+```
+
+Formatting should only be performed when the device is intended to be newly formatted or its existing data can safely be erased.
+
+---
+
+# Task 3 – Mount the Logical Volume
+
+## 1. Create Mount Point
+
+### Command
+
+```bash id="nyl5cv"
+mkdir /mnt/tws-space
+```
+
+### What I Observed
+
+Created `/mnt/tws-space` as the mount point for the logical volume.
+
+---
+
+## 2. Mount the Logical Volume
+
+### Command
+
+```bash id="6rdbfr"
+mount /dev/tws-vg/tws-lv /mnt/tws-space
+```
+
+### What I Observed
+
+The logical volume was mounted successfully at `/mnt/tws-space`.
+
+### Understanding
+
+```text
+/dev/tws-vg/tws-lv
+        ↓
+     ext4
+        ↓
+/mnt/tws-space
+```
+
+The `mount` command makes the filesystem accessible through the specified directory.
+
+---
+
+## 3. Verify the Mounted Filesystem
+
+### Command
+
+```bash id="yu8cg4"
+df -h
+```
+
+### What I Observed
+
+Verified that `/dev/tws-vg/tws-lv` was mounted and displayed its filesystem usage.
+
+---
+
+## 4. Check Block Devices Again
+
+### Command
+
+```bash id="2smujv"
+lsblk
+```
+
+### What I Observed
+
+Confirmed the logical volume and its mount point in the block-device hierarchy.
+
+---
+
+# Task 4 – Extend the Logical Volume
+
+## Extend the Logical Volume
+
+### Command
+
+```bash id="6w8j0c"
+lvextend -L +2G /dev/tws-vg/tws-lv
+```
+
+### What I Observed
+
+Increased the logical volume size by **2 GB**.
+
+### Important Concept
+
+`lvextend` increases the size of the **logical volume**.
+
+The filesystem inside the LV may still need to be resized separately.
+
+```text
+LV size increased
+       ↓
+Filesystem may still have old size
+       ↓
+Resize filesystem
+```
+
+---
+
+## Verify the Logical Volume
+
+```bash id="1o8dlp"
+lsblk
+```
+
+### What I Observed
+
+Checked the logical volume size after extending it.
+
+---
+
+## Check Filesystem Size
+
+```bash id="6c6v0x"
+df -h
+```
+
+### What I Observed
+
+Checked the filesystem size after increasing the logical volume.
+
+The filesystem may still require a separate resize operation depending on the command used.
+
+---
+
+# Task 5 – Extend the Logical Volume and Filesystem Together
+
+I also practiced using the `-r` option with `lvextend`.
+
+## Command
+
+```bash id="z4b3bc"
+lvextend -L +2G -r /dev/tws-vg/tws-lv
+```
+
+### What I Observed
+
+The `-r` option resizes the filesystem along with the logical volume.
+
+This allows the LV and its filesystem to be expanded together.
+
+---
+
+## Equivalent Command
+
+I also practiced the same command with the options written in a different order:
+
+```bash id="8k8ar8"
+lvextend -r -L +2G /dev/tws-vg/tws-lv
+```
+
+### What I Observed
+
+The options can be written in a different order while performing the same operation.
+
+---
+
+## Verify the New Size
+
+### Check Filesystem
+
+```bash id="20f8sr"
+df -h
+```
+
+### What I Observed
+
+Verified the filesystem size after extending the logical volume and resizing the filesystem.
+
+### Check Block Device
+
+```bash id="ys7c7b"
+lsblk
+```
+
+### What I Observed
+
+Confirmed the updated logical volume size and mount point in the block-device hierarchy.
+
+---
+
+# Important LVM Concept
+
+The resize process can be understood as:
+
+```text
+Before
+
+Physical Disk
+     ↓
+Physical Volume
+     ↓
+Volume Group
+     ↓
+Logical Volume
+     ↓
+Filesystem
+     ↓
+Mount Point
+
+
+After lvextend
+
+Physical Disk
+     ↓
+Physical Volume
+     ↓
+Volume Group
+     ↓
+Larger Logical Volume
+     ↓
+Filesystem
+     ↓
+Mount Point
+```
+
+### Key Point
+
+> Increasing the LV size and increasing the filesystem size are related but separate operations.
+
+Using:
+
+```bash id="rd7t2h"
+lvextend -r -L +2G /dev/tws-vg/tws-lv
+```
+
+allows the logical volume and filesystem to be resized together.
+
+---
+
+# Task 6 – Format and Mount a Separate Block Device
+
+I also practiced working with a separate block device:
+
+```text
+/dev/nvme3n1
+```
+
+---
+
+## 1. Create Mount Point
+
+```bash id="mt3w5q"
+mkdir /mnt/tws-space2
+```
+
+### What I Observed
+
+Created `/mnt/tws-space2` as the mount point.
+
+---
+
+## 2. Format the Device
+
+```bash id="ew9x56"
+mkfs -t ext4 /dev/nvme3n1
+```
+
+### What I Observed
+
+Formatted `/dev/nvme3n1` with the `ext4` filesystem.
+
+### ⚠️ Important Warning
+
+Formatting `/dev/nvme3n1` creates a new filesystem and can destroy existing data on that device.
+
+Always verify the target device before running `mkfs`:
+
+```bash
+lsblk
+```
+
+---
+
+## 3. Mount the Device
+
+```bash id="9bry4g"
+mount /dev/nvme3n1 /mnt/tws-space2
+```
+
+### What I Observed
+
+Mounted `/dev/nvme3n1` at `/mnt/tws-space2`.
+
+---
+
+## 4. Verify Storage
+
+```bash id="w4sfq2"
+df -h
+```
+
+### What I Observed
+
+Verified that the newly mounted filesystem was visible in the filesystem usage output.
+
+---
+
+# LVM Storage Flow
+
+```text
+Physical Disk
+      ↓
+Physical Volume (PV)
+      ↓
+Volume Group (VG)
+      ↓
+Logical Volume (LV)
+      ↓
+Filesystem (ext4)
+      ↓
+Mount Point
+```
+
+In this practice:
+
+```text
+tws-vg
+   ↓
+tws-lv
+   ↓
+ext4
+   ↓
+/mnt/tws-space
+```
+
+---
+
+# Useful Verification Commands
+
+## View Block Devices
+
+```bash
+lsblk
+```
+
+## View Filesystem Usage
+
+```bash
+df -h
+```
+
+## Verify LVM Volumes
+
+```bash
+pvs
+vgs
+lvs
+```
+
+These commands are useful when troubleshooting LVM:
+
+```text
+pvs → Physical Volumes
+vgs → Volume Groups
+lvs → Logical Volumes
+```
+
+---
+
+# Commands Practiced
+
+```bash
+df -h
+
+lsblk
+
+mkdir /mnt/tws-space
+
+mkfs.ext4 /dev/tws-vg/tws-lv
+
+mount /dev/tws-vg/tws-lv /mnt/tws-space
+
+lvextend -L +2G /dev/tws-vg/tws-lv
+
+lvextend -L +2G -r /dev/tws-vg/tws-lv
+
+lvextend -r -L +2G /dev/tws-vg/tws-lv
+
+mkdir /mnt/tws-space2
+
+mkfs -t ext4 /dev/nvme3n1
+
+mount /dev/nvme3n1 /mnt/tws-space2
+
+df -h
+
+lsblk
+```
+
+---
+
+# What I Learned
+
+### 1. `lsblk`
+
+`lsblk` helps understand the disk, partition, filesystem, and logical-volume structure of a Linux system.
+
+### 2. `df -h`
+
+`df -h` shows filesystem capacity, used space, and available space.
+
+### 3. `mount`
+
+`mount` connects a filesystem or block device to a directory in the Linux filesystem.
+
+### 4. `lvextend`
+
+`lvextend` increases the size of an LVM logical volume.
+
+### 5. `lvextend -r`
+
+Using `-r` allows the filesystem to be resized along with the logical volume.
+
+### 6. `mkfs`
+
+`mkfs` creates a filesystem on a block device.
+
+> Always verify the target device before using `mkfs`, because formatting can destroy existing data.
+
+---
+
+# Real-World DevOps Connection
+
+LVM is useful when a Linux server starts running out of disk space.
+
+For example:
+
+```text
+Application
+     ↓
+/opt/app
+     ↓
+Filesystem
+     ↓
+Logical Volume
+     ↓
+Volume Group
+```
+
+If more capacity is available in the volume group, the logical volume can be extended without replacing the entire filesystem.
+
+A typical investigation may start with:
+
+```bash
+df -h
+```
+
+Then:
+
+```bash
+lsblk
+```
+
+```bash
+pvs
+```
+
+```bash
+vgs
+```
+
+```bash
+lvs
+```
+
+This helps determine where additional storage is available and which layer needs to be extended.
+
+---
+
+# Practical Troubleshooting Flow
+
+### Problem
+
+A filesystem is almost full.
+
+```text
+Disk Space Alert
+       ↓
+df -h
+       ↓
+Identify Full Filesystem
+       ↓
+lsblk
+       ↓
+Check LVM Structure
+       ↓
+pvs / vgs / lvs
+       ↓
+Check Available VG Space
+       ↓
+Extend LV if space is available
+       ↓
+Resize Filesystem
+       ↓
+df -h
+       ↓
+Verify
+```
+
+---
+
+# Verification
+
+The following commands were used to verify the storage configuration:
+
+```bash
+lsblk
+df -h
+```
+
+Additional LVM inspection commands:
+
+```bash
+pvs
+vgs
+lvs
+```
+
+These commands help confirm the logical volume, volume group, filesystem, size, and mount-point configuration.
+
+---
+
+# Key Takeaways
+
+* **PV** = Physical Volume
+* **VG** = Volume Group
+* **LV** = Logical Volume
+* `lsblk` helps visualize block-device structure.
+* `df -h` shows filesystem usage.
+* `mount` makes a filesystem accessible through a directory.
+* `lvextend` increases the logical volume size.
+* `lvextend -r` increases the logical volume and resizes the filesystem.
+* `mkfs` creates a filesystem and can destroy existing data on the target device.
+* `pvs`, `vgs`, and `lvs` are useful commands for investigating LVM configuration.
+* LVM provides flexibility for managing and extending storage on Linux systems.
+
+---
+
+# Conclusion
+
+This practice helped me understand the Linux LVM storage hierarchy and how disks, volume groups, logical volumes, filesystems, and mount points are connected.
+
+I practiced checking storage, formatting and mounting filesystems, extending a logical volume, resizing the filesystem, and verifying the final storage configuration.
+
+### Final Understanding
+
+```text
+Disk
+ ↓
+PV
+ ↓
+VG
+ ↓
+LV
+ ↓
+Filesystem
+ ↓
+Mount Point
+```
+
+> **LVM provides a flexible way to manage Linux storage and extend logical volumes when additional capacity is available.**
+
+### One thing to be careful about in your actual lab
+
+Your sequence contains both:
+
+```bash
+lvextend -L +2G /dev/tws-vg/tws-lv
+```
+
+and later:
+
+```bash
+lvextend -L +2G -r /dev/tws-vg/tws-lv
+```
+
+These are **two separate +2 GB extensions**, not two equivalent ways of performing the same single extension.
+
+So, if both were actually run against the same LV, the LV was increased by **4 GB total** (assuming both succeeded and enough free space existed in the volume group).
+
+For future practice, use either:
+
+```bash
+lvextend -L +2G ...
+```
+
+followed by the appropriate filesystem-resize command,
+
+**or** simply:
+
+```bash
+lvextend -r -L +2G ...
+```
+
+for one 2 GB extension plus filesystem resize.
+
+Absolutely, Aaru. Add this **LVM Quick Cheat Sheet** to your Day 13 notes. It gives you the commands in the order you would actually use them during administration or troubleshooting.
+
+# LVM Quick Cheat Sheet
+
+## LVM Structure
+
+```text
+Physical Disk
+     ↓
+Physical Volume (PV)
+     ↓
+Volume Group (VG)
+     ↓
+Logical Volume (LV)
+     ↓
+Filesystem
+     ↓
+Mount Point
+```
+
+### Easy Memory
+
+```text
+PV → VG → LV → Filesystem → Mount
+```
+
+---
+
+# 1. Check Storage
+
+### List disks and partitions
+
+```bash
+lsblk
+```
+
+### Check filesystem usage
+
+```bash
+df -h
+```
+
+### Display Physical Volumes
+
+```bash
+pvs
+```
+
+### Display Volume Groups
+
+```bash
+vgs
+```
+
+### Display Logical Volumes
+
+```bash
+lvs
+```
+
+---
+
+# 2. Create an LVM Setup
+
+## Create Physical Volume
+
+```bash
+pvcreate /dev/sdb
+```
+
+## Create Volume Group
+
+```bash
+vgcreate data-vg /dev/sdb
+```
+
+## Create Logical Volume
+
+```bash
+lvcreate -L 10G -n data-lv data-vg
+```
+
+---
+
+# 3. Format a Logical Volume
+
+### Format with ext4
+
+```bash
+mkfs.ext4 /dev/data-vg/data-lv
+```
+
+⚠️ **Warning:** `mkfs` creates a new filesystem and can destroy existing data.
+
+Always verify the device first:
+
+```bash
+lsblk
+```
+
+---
+
+# 4. Mount an LVM Volume
+
+## Create Mount Point
+
+```bash
+mkdir -p /mnt/data
+```
+
+## Mount
+
+```bash
+mount /dev/data-vg/data-lv /mnt/data
+```
+
+## Verify
+
+```bash
+df -h
+```
+
+```bash
+lsblk
+```
+
+---
+
+# 5. Extend a Logical Volume
+
+## Increase LV by 2 GB
+
+```bash
+lvextend -L +2G /dev/data-vg/data-lv
+```
+
+### Important
+
+This increases the **logical volume**, but the filesystem may still need to be resized.
+
+---
+
+# 6. Extend LV + Filesystem Together
+
+```bash
+lvextend -r -L +2G /dev/data-vg/data-lv
+```
+
+### Meaning
+
+```text
+lvextend
+   ↓
+Increase LV
+   +
+-r
+   ↓
+Resize filesystem
+```
+
+This is a convenient option when supported by the filesystem/tools in use.
+
+---
+
+# 7. Verify After Extension
+
+### Check LV
+
+```bash
+lvs
+```
+
+### Check block devices
+
+```bash
+lsblk
+```
+
+### Check filesystem
+
+```bash
+df -h
+```
+
+---
+
+# 8. Reduce an LVM Volume
+
+⚠️ **Reducing a filesystem/LV is more risky than extending it.**
+
+Do not simply use `lvreduce` on a mounted filesystem without confirming the filesystem supports the required procedure.
+
+For example:
+
+```bash
+lvreduce -L -2G /dev/data-vg/data-lv
+```
+
+### Important
+
+> **Never reduce the LV before safely reducing the filesystem first.**
+
+Reducing the LV incorrectly can cause data loss.
+
+---
+
+# 9. Add Disk Space to an Existing Volume Group
+
+If a new disk is added:
+
+```bash
+lsblk
+```
+
+Create a physical volume:
+
+```bash
+pvcreate /dev/sdc
+```
+
+Extend the existing volume group:
+
+```bash
+vgextend data-vg /dev/sdc
+```
+
+Verify:
+
+```bash
+vgs
+```
+
+Now the VG has additional free space that can be allocated to an LV.
+
+---
+
+# 10. Useful LVM Commands
+
+| Command     | Purpose                                       |
+| ----------- | --------------------------------------------- |
+| `lsblk`     | View disks, partitions, LVs, and mount points |
+| `df -h`     | Check filesystem usage                        |
+| `pvs`       | Display physical volumes                      |
+| `vgs`       | Display volume groups                         |
+| `lvs`       | Display logical volumes                       |
+| `pvcreate`  | Create a physical volume                      |
+| `vgcreate`  | Create a volume group                         |
+| `vgextend`  | Add a PV to a volume group                    |
+| `lvcreate`  | Create a logical volume                       |
+| `lvextend`  | Increase LV size                              |
+| `lvreduce`  | Reduce LV size; use with caution              |
+| `mkfs.ext4` | Create an ext4 filesystem                     |
+| `mount`     | Mount a filesystem                            |
+| `umount`    | Unmount a filesystem                          |
+
+---
+
+# 11. LVM Troubleshooting Flow
+
+### Problem: Filesystem Almost Full
+
+```text
+Filesystem Full
+      ↓
+df -h
+      ↓
+Identify Full Mount Point
+      ↓
+lsblk
+      ↓
+lvs
+      ↓
+vgs
+      ↓
+Check Free Space in VG
+      ↓
+Extend LV
+      ↓
+Resize Filesystem
+      ↓
+df -h
+      ↓
+Verify
+```
+
+### Commands
+
+```bash
+df -h
+```
+
+```bash
+lsblk
+```
+
+```bash
+pvs
+```
+
+```bash
+vgs
+```
+
+```bash
+lvs
+```
+
+Then, when appropriate:
+
+```bash
+lvextend -r -L +2G /dev/<vg>/<lv>
+```
+
+---
+
+# 12. Example
+
+Suppose:
+
+```text
+VG = tws-vg
+LV = tws-lv
+Mount Point = /mnt/tws-space
+```
+
+Check:
+
+```bash
+lvs
+vgs
+df -h
+```
+
+Extend:
+
+```bash
+lvextend -r -L +2G /dev/tws-vg/tws-lv
+```
+
+Verify:
+
+```bash
+lvs
+df -h
+lsblk
+```
+
+---
+
+# 13. LVM Quick Memory Map
+
+```text
+PV
+Physical Volume
+     ↓
+VG
+Volume Group
+     ↓
+LV
+Logical Volume
+     ↓
+Filesystem
+     ↓
+Mount Point
+```
+
+### Remember
+
+```text
+pvs → PV
+vgs → VG
+lvs → LV
+
+pvcreate → Create PV
+vgcreate → Create VG
+lvcreate → Create LV
+
+vgextend → Add storage to VG
+lvextend → Increase LV
+```
+
+---
+
+# 14. Important Interview Questions
+
+### What is LVM?
+
+> LVM (Logical Volume Manager) provides flexible management of storage by allowing logical volumes to be created and resized independently of physical disk partitions.
+
+### What is the difference between PV, VG, and LV?
+
+```text
+PV → Physical storage prepared for LVM
+VG → Storage pool made from one or more PVs
+LV → Logical storage allocated from a VG
+```
+
+### How do you extend an LV?
+
+```bash
+lvextend -L +2G /dev/<vg>/<lv>
+```
+
+Then resize the filesystem as required, or use:
+
+```bash
+lvextend -r -L +2G /dev/<vg>/<lv>
+```
+
+### What commands do you use to troubleshoot LVM?
+
+```bash
+lsblk
+pvs
+vgs
+lvs
+df -h
+```
+
+---
+
+# Golden Rule
+
+> **Always identify the correct disk, VG, LV, filesystem, and mount point before making storage changes.**
+
+Especially before running:
+
+```bash
+mkfs
+lvreduce
+```
+
+because incorrect usage can result in data loss.
+
