@@ -1,0 +1,333 @@
+## 🐚 Day 16 – Shell Scripting Cheat Sheet
+
+### 1. Shebang
+
+```bash
+#!/bin/bash
+```
+
+Tells Linux to execute the script using Bash.
+
+---
+
+### 2. Create and Run a Script
+
+```bash
+vim script.sh
+chmod +x script.sh
+./script.sh
+```
+
+Or run without execute permission:
+
+```bash
+bash script.sh
+```
+
+---
+
+### 3. Variables
+
+```bash
+NAME="Shashank"
+ROLE="DevOps Engineer"
+
+echo "$NAME"
+echo "$ROLE"
+```
+
+⚠️ No spaces around `=`:
+
+```bash
+NAME="Shashank"      # Correct
+NAME = "Shashank"    # Wrong
+```
+
+---
+
+### 4. User Input
+
+```bash
+read -p "Enter your name: " NAME
+echo "Hello $NAME"
+```
+
+---
+
+### 5. Command Substitution
+
+Use `$()` to store command output:
+
+```bash
+DATE=$(date)
+HOSTNAME=$(hostname)
+
+echo "$DATE"
+echo "$HOSTNAME"
+```
+
+Example:
+
+```bash
+DISK=$(df -h / | awk 'NR==2 {print $5}')
+echo "Disk usage: $DISK"
+```
+
+---
+
+### 6. If-Else Syntax
+
+```bash
+if [ condition ]; then
+    command
+elif [ condition ]; then
+    command
+else
+    command
+fi
+```
+
+Example:
+
+```bash
+if [ "$USER" = "root" ]; then
+    echo "You are root"
+else
+    echo "You are not root"
+fi
+```
+
+---
+
+### 7. Numeric Comparisons
+
+| Operator | Meaning               |
+| -------- | --------------------- |
+| `-eq`    | Equal                 |
+| `-ne`    | Not equal             |
+| `-gt`    | Greater than          |
+| `-lt`    | Less than             |
+| `-ge`    | Greater than or equal |
+| `-le`    | Less than or equal    |
+
+Example:
+
+```bash
+if [ "$AGE" -ge 18 ]; then
+    echo "Adult"
+fi
+```
+
+---
+
+### 8. String Comparisons
+
+```bash
+if [ "$CHOICE" = "y" ]; then
+    echo "Yes"
+fi
+```
+
+Common operators:
+
+```text
+=       Equal
+!=      Not equal
+-z      String is empty
+-n      String is not empty
+```
+
+Example:
+
+```bash
+if [ -z "$NAME" ]; then
+    echo "Name is empty"
+fi
+```
+
+---
+
+### 9. File Tests ⭐
+
+Very important for Linux/DevOps scripts.
+
+```bash
+-f file       # Regular file
+-d directory  # Directory
+-e path       # Path exists
+-r file       # Readable
+-w file       # Writable
+-x file       # Executable
+-s file       # File exists and is not empty
+```
+
+Example:
+
+```bash
+if [ -f "/etc/passwd" ]; then
+    echo "File exists"
+fi
+```
+
+Directory:
+
+```bash
+if [ -d "/etc" ]; then
+    echo "Directory exists"
+fi
+```
+
+---
+
+### 10. Logical Operators
+
+```bash
+&&    # AND
+||    # OR
+!     # NOT
+```
+
+Example:
+
+```bash
+if [ "$USER" = "root" ] && [ -f "/etc/passwd" ]; then
+    echo "Condition satisfied"
+fi
+```
+
+---
+
+### 11. Exit Status ⭐
+
+Linux commands return an exit status.
+
+```bash
+0
+```
+
+means success.
+
+Non-zero means failure.
+
+Check the previous command:
+
+```bash
+echo $?
+```
+
+Example:
+
+```bash
+systemctl status nginx
+
+echo $?
+```
+
+In scripting:
+
+```bash
+if systemctl is-active --quiet nginx; then
+    echo "Nginx is running"
+else
+    echo "Nginx is down"
+fi
+```
+
+---
+
+### 12. Useful Shell Variables
+
+```bash
+$0      # Script name
+$1      # First argument
+$2      # Second argument
+$#      # Number of arguments
+$@      # All arguments
+$?      # Exit status
+$$      # Current process PID
+$USER   # Current user
+$HOME   # User home directory
+$PWD    # Current directory
+```
+
+Example:
+
+```bash
+#!/bin/bash
+
+echo "Script: $0"
+echo "First argument: $1"
+echo "Second argument: $2"
+echo "Arguments: $#"
+```
+
+Run:
+
+```bash
+./script.sh hello devops
+```
+
+---
+
+### 13. Comments
+
+```bash
+# This is a comment
+
+echo "Hello"
+```
+
+Comments are ignored by the shell and help explain the script.
+
+---
+
+## ⭐ DevOps-Relevant Example
+
+A simple disk-space monitoring script:
+
+```bash
+#!/bin/bash
+
+USAGE=$(df -h / | awk 'NR==2 {print $5}' | tr -d '%')
+
+if [ "$USAGE" -gt 80 ]; then
+    echo "WARNING: Disk usage is ${USAGE}%"
+else
+    echo "Disk usage is ${USAGE}% - OK"
+fi
+```
+
+This combines several concepts you've learned:
+
+```text
+Command
+   ↓
+Command substitution
+   ↓
+Variable
+   ↓
+Condition
+   ↓
+Action
+   ↓
+Output
+```
+
+### 🎯 Day 16 Interview Questions
+
+1. What is a shebang?
+2. Why do we use `#!/bin/bash`?
+3. What is the difference between `$VAR` and `${VAR}`?
+4. Why should there be no spaces around `=` during variable assignment?
+5. Difference between single and double quotes?
+6. How do you take user input in Bash?
+7. What is `$?`?
+8. What does exit status `0` mean?
+9. Difference between `-f` and `-d`?
+10. What are `$0`, `$1`, `$#`, and `$@`?
+11. How do you check whether a service is running from a script?
+12. How would you create a script to check disk usage?
+13. How do you make a shell script executable?
+14. Difference between `./script.sh` and `bash script.sh`?
+15. How can shell scripting help a DevOps engineer?
+
