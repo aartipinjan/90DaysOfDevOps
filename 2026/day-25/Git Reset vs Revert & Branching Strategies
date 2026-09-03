@@ -1,0 +1,388 @@
+# Day 25 – Git Reset vs Revert & Branching Strategies
+
+## 🎯 Task
+
+Today I practiced **Git Reset**, **Git Revert**, and reviewed common **Git branching strategies** using my `devops-git-practice` repository.
+
+> **Repository Note:** My default branch is `master`.
+
+---
+
+# Task 1 – Git Reset
+
+## 1. Create Three Commits
+
+```bash
+touch file-prac.txt
+git add .
+git commit -m "first commit"
+
+echo "first line" >> file-prac.txt
+git add .
+git commit -m "second commit"
+
+echo "second line" >> file-prac.txt
+git add .
+git commit -m "third commit"
+```
+
+### Check Commit History
+
+```bash
+git log --oneline
+```
+
+---
+
+## 2. `git reset --soft`
+
+```bash
+git reset --soft d26c685
+git status
+```
+
+### Observation
+
+* `HEAD` moved back to the specified commit.
+* Changes from the removed commit remained **staged**.
+* The changes were available to recommit.
+
+### Recommit the Changes
+
+```bash
+git commit -m "after soft commit"
+```
+
+### Key Point
+
+```text
+HEAD        → moved
+Staging     → preserved
+Working Tree → preserved
+```
+
+---
+
+## 3. `git reset --mixed`
+
+```bash
+git reset --mixed d26c685
+git status
+```
+
+### Observation
+
+* `HEAD` moved back.
+* Changes became **unstaged**.
+* Files remained modified in the working directory.
+
+### Stage and Commit Again
+
+```bash
+git add .
+git commit -m "after mixed commit"
+```
+
+### Key Point
+
+```text
+HEAD        → moved
+Staging     → cleared
+Working Tree → preserved
+```
+
+---
+
+## 4. `git reset --hard`
+
+```bash
+git reset --hard d26c685
+git status
+git log --oneline
+```
+
+### Observation
+
+* `HEAD` moved back.
+* Staged changes were discarded.
+* Working-tree changes were also discarded.
+
+> ⚠️ **Warning:** `git reset --hard` can permanently discard uncommitted changes.
+
+### Key Point
+
+```text
+HEAD        → moved
+Staging     → cleared
+Working Tree → discarded
+```
+
+---
+
+## 5. Reset Comparison
+
+| Reset Mode | HEAD  | Staging Area            | Working Tree      |
+| ---------- | ----- | ----------------------- | ----------------- |
+| `--soft`   | Moves | Changes remain staged   | Changes remain    |
+| `--mixed`  | Moves | Changes become unstaged | Changes remain    |
+| `--hard`   | Moves | Changes cleared         | Changes discarded |
+
+### Important
+
+**Most destructive:** `git reset --hard`
+
+For commits that have already been pushed to a shared repository, prefer **`git revert`** rather than rewriting shared history with reset.
+
+---
+
+# Task 2 – Git Revert
+
+## 1. Create Three Commits
+
+```bash
+touch revert.txt
+git add .
+git commit -m "x"
+
+touch revert1.txt
+git add .
+git commit -m "y"
+
+touch revert2.txt
+git add .
+git commit -m "z"
+```
+
+### Check History
+
+```bash
+git log --oneline
+```
+
+---
+
+## 2. Revert the Middle Commit
+
+```bash
+git revert 6eac539
+git log --oneline
+```
+
+### Observation
+
+* Commit **Y** remained in the Git history.
+* Git created a **new commit** that reversed the changes introduced by Y.
+* The existing history was not rewritten.
+
+### Reset vs Revert
+
+|                                    | `git reset`                       | `git revert`           |
+| ---------------------------------- | --------------------------------- | ---------------------- |
+| Creates a new commit               | No                                | Yes                    |
+| Rewrites branch history            | Yes                               | No                     |
+| Suitable for shared branches       | Generally no                      | Yes                    |
+| Common use                         | Local history cleanup             | Safely undoing changes |
+| Original commit remains in history | Not on branch history after reset | Yes                    |
+
+### Simple Concept
+
+```text
+RESET
+
+A ── B ── C
+          ↓
+       reset to B
+
+A ── B
+
+
+REVERT
+
+A ── B ── C
+          ↓
+A ── B ── C ── R
+
+R = new commit that reverses C
+```
+
+---
+
+# Task 3 – Git Branching Strategies
+
+## 1. GitFlow
+
+```text
+master
+  │
+develop
+  ├── feature/*
+  ├── release/*
+  └── hotfix/*
+```
+
+### Use Case
+
+**GitFlow** is commonly used when development follows structured or scheduled release cycles.
+
+---
+
+## 2. GitHub Flow
+
+```text
+main
+  │
+  └── feature
+        │
+        ▼
+   Pull Request
+        │
+        ▼
+       main
+```
+
+### Use Case
+
+**GitHub Flow** is suitable for teams that want a simple workflow with frequent integration and continuous delivery.
+
+---
+
+## 3. Trunk-Based Development
+
+```text
+Developer A ─┐
+Developer B ─┼──► main
+Developer C ─┘
+```
+
+### Use Case
+
+**Trunk-Based Development** focuses on frequent integration into a shared main/trunk branch and works well with strong CI/CD practices.
+
+---
+
+## My Choices
+
+| Scenario                               | Preferred Strategy      |
+| -------------------------------------- | ----------------------- |
+| Startup shipping quickly               | GitHub Flow             |
+| Large team with scheduled releases     | GitFlow                 |
+| Frequent integration with strong CI/CD | Trunk-Based Development |
+
+---
+
+# Task 4 – Commands I Practiced
+
+## Git Reset
+
+```bash
+git reset --soft <commit>
+git reset --mixed <commit>
+git reset --hard <commit>
+```
+
+## Git Revert
+
+```bash
+git revert <commit>
+```
+
+## History & Status
+
+```bash
+git log --oneline
+git status
+```
+
+---
+
+# Mistakes I Made
+
+| Mistake            | Correct Command     |
+| ------------------ | ------------------- |
+| `git commmit`      | `git commit`        |
+| `git log --online` | `git log --oneline` |
+| `git staus`        | `git status`        |
+
+These small mistakes helped me remember the correct Git command names.
+
+---
+
+# Git Reset vs Revert – Quick Revision
+
+```text
+Need to change local history?
+          │
+          ▼
+      GIT RESET
+          │
+          ├── --soft
+          ├── --mixed
+          └── --hard
+
+
+Need to safely undo a shared commit?
+          │
+          ▼
+      GIT REVERT
+          │
+          ▼
+ Creates a new commit
+ that reverses the changes
+```
+
+---
+
+# Key Takeaways
+
+1. **`git reset`** moves the branch pointer and can rewrite local history.
+2. **`git revert`** creates a new commit that undoes the changes of an earlier commit.
+3. `--soft`, `--mixed`, and `--hard` differ mainly in how they handle the **staging area and working tree**.
+4. Avoid using `git reset` to rewrite history that has already been shared.
+5. Use **`git revert`** when you need to safely undo a change on a shared branch.
+6. Branching strategies should be selected based on the team's development and release model.
+
+---
+
+# Practice Summary
+
+| Task                           | Status      |
+| ------------------------------ | ----------- |
+| Git Reset – `--soft`           | ✅ Completed |
+| Git Reset – `--mixed`          | ✅ Completed |
+| Git Reset – `--hard`           | ✅ Completed |
+| Git Revert                     | ✅ Completed |
+| Reset vs Revert Comparison     | ✅ Completed |
+| GitFlow Review                 | ✅ Completed |
+| GitHub Flow Review             | ✅ Completed |
+| Trunk-Based Development Review | ✅ Completed |
+| Git Command Reference          | ✅ Completed |
+
+---
+
+# Day 25 – Final Takeaway
+
+```text
+RESET
+  ↓
+Rewrite / move local history
+
+REVERT
+  ↓
+Create a new commit to undo changes
+
+GITFLOW
+  ↓
+Structured release-based development
+
+GITHUB FLOW
+  ↓
+Simple feature → PR → main workflow
+
+TRUNK-BASED
+  ↓
+Frequent integration into the main branch
+```
+
+### 🚀 Day 25 Completed
+
+`#90DaysOfDevOps` `#DevOpsKaJosh` 
