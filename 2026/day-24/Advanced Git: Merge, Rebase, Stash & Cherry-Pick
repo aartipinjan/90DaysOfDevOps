@@ -1,0 +1,1626 @@
+# Day 24 – Advanced Git: Merge, Rebase, Stash & Cherry-Pick
+
+## Objective
+
+Today I practiced advanced Git operations by working with:
+
+* Git branches
+* Merge
+* Fast-forward merge
+* Merge commits
+* Merge conflicts
+* Rebase
+* Squash merge
+* Stash
+* Cherry-pick
+* Conflict resolution
+* Git history visualization
+
+> **Note:** My repository uses `master` as the main branch name, so the commands and observations below use `master` instead of `main`.
+
+---
+
+# Task 1 – Git Merge Hands-On
+
+## 1. Feature Login
+
+I already had the following branches:
+
+```bash
+git branch
+```
+
+Relevant branches included:
+
+```text
+feature-1
+feature-2
+feature-hotfix
+feature-login
+feature-signup
+master
+```
+
+I worked on the `feature-login` branch and created three commits.
+
+### Commits Created
+
+```text
+5038a1b adding new commit
+5285d67 adding new commit
+c61691c adding 3 commit
+```
+
+### Commands Used
+
+```bash
+git checkout feature-login
+
+echo "hello my name is Aarti" >> hello.txt
+git add .
+git commit -m "adding new commit"
+
+echo "hello my age is 21" >> hello.txt
+git add .
+git commit -m "adding new commit"
+
+echo "End" >> hello.txt
+git add .
+git commit -m "adding 3 commit"
+```
+
+> **Note:** I replaced the personal name in the example with `Aarti` for reusable notes.
+
+### Check Commit History
+
+```bash
+git log --oneline
+```
+
+Output:
+
+```text
+c61691c (HEAD -> feature-login) adding 3 commit
+5285d67 adding new commit
+5038a1b adding new commit
+a668e00 (master) adding testing line
+```
+
+---
+
+## 2. Fast-Forward Merge
+
+I switched to the `master` branch:
+
+```bash
+git checkout master
+```
+
+Then merged `feature-login`:
+
+```bash
+git merge feature-login
+```
+
+Git returned:
+
+```text
+Updating a668e00..c61691c
+Fast-forward
+ hello.txt | 3 +++
+ 1 file changed, 3 insertions(+)
+ create mode 100644 hello.txt
+```
+
+### Observation
+
+This was a **fast-forward merge** because `master` had not moved forward after `feature-login` was created.
+
+Git simply moved the `master` branch pointer to the latest commit of `feature-login`.
+
+### What Is a Fast-Forward Merge?
+
+A fast-forward merge happens when the target branch has no new commits of its own.
+
+Git can simply move the branch pointer forward without creating a separate merge commit.
+
+### Visual Representation
+
+```text
+Before:
+
+master
+  ↓
+  A
+   \
+    B → C → D
+             ↑
+        feature-login
+
+
+After:
+
+master
+        ↓
+A → B → C → D
+             ↑
+        feature-login
+```
+
+---
+
+## 3. Feature Signup and Merge Commit
+
+I created the `feature-signup` branch:
+
+```bash
+git checkout -b feature-signup
+```
+
+I created two commits:
+
+```text
+50841ff first commit
+137ad04 adding 2 commit
+```
+
+Then I switched to `master` and created another commit:
+
+```text
+0bfea18 adding file commit
+```
+
+After that, I merged:
+
+```bash
+git merge feature-signup
+```
+
+Git created:
+
+```text
+6028ccb Merge branch 'feature-signup'
+```
+
+### Observation
+
+This time the branches had **diverged** because both `master` and `feature-signup` had commits that the other branch did not have.
+
+Therefore, Git created a **merge commit** instead of performing a fast-forward merge.
+
+### When Does Git Create a Merge Commit?
+
+A merge commit is created when two branches have diverged and Git needs to combine their separate histories.
+
+### Visual Representation
+
+```text
+        D---E  feature-signup
+       /     \
+A---B---C-----M  master
+```
+
+`M` is the merge commit.
+
+---
+
+## 4. Intentional Merge Conflict
+
+I modified `hello.txt` on both branches.
+
+On `master`, I created:
+
+```text
+f692667 adding commit for merge conflict
+```
+
+On `feature-login`, I created:
+
+```text
+0c740b5 adding merge conflict 2
+```
+
+Then I tried:
+
+```bash
+git checkout master
+git merge feature-login
+```
+
+Git reported:
+
+```text
+Auto-merging hello.txt
+CONFLICT (content): Merge conflict in hello.txt
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+The file contained conflict markers similar to:
+
+```text
+<<<<<<< HEAD
+can update soon
+=======
+new change
+>>>>>>> feature-login
+```
+
+I opened the file:
+
+```bash
+vim hello.txt
+```
+
+I manually resolved the conflicting content.
+
+Then:
+
+```bash
+git add .
+git commit -m "resolved conflict"
+```
+
+This created:
+
+```text
+b489dcd resolved conflict
+```
+
+### What Is a Merge Conflict?
+
+A merge conflict occurs when Git cannot automatically combine changes from two branches.
+
+A common example is when two branches modify the same part of the same file.
+
+### Merge Conflict Workflow
+
+```bash
+git merge <branch>
+
+# Resolve the conflict
+vim <conflicted-file>
+
+# Stage the resolved file
+git add <conflicted-file>
+
+# Complete the merge
+git commit -m "resolved conflict"
+```
+
+### Important Conflict Markers
+
+```text
+<<<<<<< HEAD
+Current branch changes
+=======
+Incoming branch changes
+>>>>>>> feature-login
+```
+
+---
+
+# Task 2 – Git Rebase Hands-On
+
+## 1. Create Feature Dashboard
+
+I created the branch:
+
+```bash
+git checkout -b feature-dashboard
+```
+
+Then I created three commits.
+
+### Commit 1
+
+```bash
+touch file.txt
+git add .
+git commit -m "1"
+```
+
+Commit:
+
+```text
+f9ffd23 1
+```
+
+### Commit 2
+
+```bash
+echo "hello" > file.txt
+git add .
+git commit -m "2"
+```
+
+Commit:
+
+```text
+f8f0f7c 2
+```
+
+### Commit 3
+
+```bash
+echo "this is the second line" >> file1.txt
+git add .
+git commit -m "3"
+```
+
+Commit:
+
+```text
+44a7a4c 3
+```
+
+The feature branch contained:
+
+```text
+44a7a4c 3
+f8f0f7c 2
+f9ffd23 1
+```
+
+---
+
+## 2. Move Master Forward
+
+I switched to `master`:
+
+```bash
+git checkout master
+```
+
+Then created a new commit:
+
+```bash
+touch rebase-prac.txt
+git add .
+git commit -m "4"
+```
+
+Commit:
+
+```text
+00b6fed 4
+```
+
+Now `master` had moved ahead while the feature branch still had its own commits.
+
+---
+
+## 3. Rebase
+
+I first tried:
+
+```bash
+git rebase main
+```
+
+Git returned:
+
+```text
+fatal: invalid upstream 'main'
+```
+
+### Observation
+
+My repository uses:
+
+```text
+master
+```
+
+instead of:
+
+```text
+main
+```
+
+So I ran:
+
+```bash
+git rebase master
+```
+
+Git returned:
+
+```text
+Successfully rebased and updated refs/heads/feature-login.
+```
+
+I then checked the history:
+
+```bash
+git log --oneline --graph --all
+```
+
+The history showed the branches and their relationships.
+
+---
+
+## What Does Rebase Do?
+
+Rebase takes commits from one branch and **replays them on top of another base commit**.
+
+### Merge
+
+```text
+A---B---C---M
+     \     /
+      D---E
+```
+
+Merge preserves the branch structure and may create a merge commit.
+
+### Rebase
+
+```text
+A---B---C---D'---E'
+```
+
+Rebase creates a more linear history by replaying the feature commits on top of the new base.
+
+---
+
+## Why Should Shared Commits Not Normally Be Rebased?
+
+Rebase **rewrites commit history**.
+
+If commits have already been pushed and shared with other developers, rewriting those commits can make the shared history difficult to reconcile.
+
+Therefore, rebasing is generally safer on private or local feature branches before they are shared.
+
+---
+
+## When Would I Use Rebase?
+
+I would use rebase when I want to:
+
+* Update my feature branch with the latest `master` changes.
+* Keep the commit history relatively linear.
+* Avoid unnecessary merge commits.
+
+I would use merge when:
+
+* Preserving the actual branch history is important.
+* Working with already-shared history.
+* I want to explicitly record that two branches were combined.
+
+---
+
+# Task 3 – Squash Merge
+
+## 1. Create Feature Profile
+
+I switched to `master`:
+
+```bash
+git checkout master
+```
+
+Then created:
+
+```bash
+git checkout -b feature-profile
+```
+
+I created three commits.
+
+### Commit 1
+
+```bash
+touch vim.txt
+git add .
+git commit -m "first commit"
+```
+
+Commit:
+
+```text
+fe4e2b0 first commit
+```
+
+### Commit 2
+
+```bash
+echo "first line" > vim.txt
+git add .
+git commit -m "second commit"
+```
+
+Commit:
+
+```text
+ad7a324 second commit
+```
+
+### Commit 3
+
+```bash
+echo "second line" >> vim.txt
+git add .
+git commit -m "third commit"
+```
+
+Commit:
+
+```text
+43daf8b third commit
+```
+
+---
+
+## 2. Squash Merge
+
+I switched to `master`:
+
+```bash
+git checkout master
+```
+
+Then ran:
+
+```bash
+git merge feature-profile --squash
+```
+
+Git showed:
+
+```text
+Updating 00b6fed..43daf8b
+Fast-forward
+Squash commit -- not updating HEAD
+ vim.txt | 2 ++
+ 1 file changed, 2 insertions(+)
+ create mode 100644 vim.txt
+```
+
+I checked:
+
+```bash
+git status
+```
+
+The result showed the changes staged:
+
+```text
+Changes to be committed:
+    new file: vim.txt
+```
+
+I then committed the staged changes:
+
+```bash
+git commit -m "adding new file"
+```
+
+Result:
+
+```text
+d8852b5 adding new file
+```
+
+### Observation
+
+The three commits from `feature-profile` were **not added individually** to `master`.
+
+Instead, their combined changes were staged and committed as one new commit:
+
+```text
+d8852b5 adding new file
+```
+
+---
+
+## What Does Squash Merge Do?
+
+Squash merging combines the changes introduced by multiple commits into one set of changes.
+
+The changes are then staged and must be committed separately on the target branch.
+
+### Command
+
+```bash
+git checkout master
+git merge feature-profile --squash
+git commit -m "adding new file"
+```
+
+### When Would I Use Squash Merge?
+
+I would use squash merge when a feature branch contains many small or intermediate commits and I want the target branch to have a cleaner history.
+
+### Trade-Off
+
+**Advantage:**
+
+* Cleaner target branch history.
+* One meaningful commit for the complete feature.
+
+**Disadvantage:**
+
+* Individual commits from the feature branch are not preserved as separate commits on the target branch.
+
+---
+
+## 3. Feature Settings
+
+I had a `feature-settings` branch with commits:
+
+```text
+a400128 1
+c55a89a 2
+a705ad5 3
+```
+
+The practice history showed the branch, but I did **not** record a completed regular merge of `feature-settings` into `master` in the commands provided.
+
+Therefore, I am not claiming that a regular merge was successfully completed for this part.
+
+### Squash Merge
+
+```bash
+git merge feature-profile --squash
+git commit -m "adding new file"
+```
+
+Result:
+
+```text
+Feature changes → One new commit on master
+```
+
+### Regular Merge
+
+```bash
+git merge feature-settings
+```
+
+This command was part of the Day 24 requirement, but its successful execution was not present in my recorded practice.
+
+---
+
+# Task 4 – Git Stash Hands-On
+
+## 1. Create Uncommitted Changes
+
+I modified:
+
+```bash
+vim vim.txt
+```
+
+I committed one change first:
+
+```bash
+git add .
+git commit -m "file"
+```
+
+Commit:
+
+```text
+35fe775 file
+```
+
+Then I modified `vim.txt` again without committing.
+
+---
+
+## 2. Try Switching Branches
+
+I tried:
+
+```bash
+git checkout master
+```
+
+Git stopped me:
+
+```text
+error: Your local changes to the following files would be overwritten by checkout:
+    vim.txt
+Please commit your changes or stash them before you switch branches.
+Aborting
+```
+
+### Observation
+
+Git prevented the branch switch because my uncommitted changes could potentially be overwritten.
+
+---
+
+## 3. Use Git Stash
+
+I ran:
+
+```bash
+git stash
+```
+
+Git returned:
+
+```text
+Saved working directory and index state WIP on feature-profile: 35fe775 file
+```
+
+I could then switch branches:
+
+```bash
+git checkout master
+```
+
+---
+
+## 4. Create Multiple Stashes
+
+I modified `vim.txt` again and created another stash:
+
+```bash
+git stash
+```
+
+Then checked the stash list:
+
+```bash
+git stash list
+```
+
+Output:
+
+```text
+stash@{0}: WIP on master: a705ad5 3
+stash@{1}: WIP on feature-profile: 35fe775 file
+```
+
+### Important Concept
+
+Git stores stashes using references such as:
+
+```text
+stash@{0}
+stash@{1}
+stash@{2}
+```
+
+The newest stash is normally:
+
+```text
+stash@{0}
+```
+
+---
+
+## 5. Mistake – `git pop`
+
+I accidentally ran:
+
+```bash
+git pop a705ad5
+```
+
+Git returned:
+
+```text
+git: 'pop' is not a git command.
+```
+
+### Correct Command
+
+```bash
+git stash pop
+```
+
+---
+
+## 6. Mistake – Using a Commit Hash
+
+I then tried:
+
+```bash
+git stash pop a705ad5
+```
+
+Git returned:
+
+```text
+fatal: 'a705ad5' is not a stash-like commit
+```
+
+### Lesson
+
+A normal commit hash and a stash reference are different.
+
+**Commit:**
+
+```text
+a705ad5
+```
+
+**Stash:**
+
+```text
+stash@{0}
+```
+
+---
+
+## 7. Apply a Specific Stash
+
+I ran:
+
+```bash
+git stash pop stash@{0}
+```
+
+The changes were restored:
+
+```text
+modified: vim.txt
+```
+
+The successfully applied stash was removed from the stash list.
+
+---
+
+## 8. Apply the Remaining Stash
+
+I checked:
+
+```bash
+git stash list
+```
+
+There was one stash remaining:
+
+```text
+stash@{0}: WIP on feature-profile: 35fe775 file
+```
+
+I ran:
+
+```bash
+git stash pop stash@{0}
+```
+
+Git reported:
+
+```text
+error: Your local changes to the following files would be overwritten by merge:
+    vim.txt
+```
+
+The stash was kept:
+
+```text
+The stash entry is kept in case you need it again.
+```
+
+### `git stash pop` vs `git stash apply`
+
+| Command           | Behavior                                                 |
+| ----------------- | -------------------------------------------------------- |
+| `git stash pop`   | Applies the stash and removes it if successfully applied |
+| `git stash apply` | Applies the stash but keeps it in the stash list         |
+
+### When Would I Use Stash?
+
+I would use stash when I have unfinished work and need to temporarily switch branches for another task.
+
+For example:
+
+```text
+Working on feature
+       ↓
+Urgent production fix
+       ↓
+git stash
+       ↓
+Switch to hotfix branch
+       ↓
+Fix production issue
+       ↓
+Return to feature
+       ↓
+git stash pop
+```
+
+---
+
+# Task 5 – Cherry-Pick
+
+## 1. Create Feature Hotfix
+
+I created:
+
+```bash
+git checkout -b feature-hotfix
+```
+
+I then created three commits.
+
+### Commit 1
+
+```bash
+touch cherry.txt
+git add .
+git commit -m "1"
+```
+
+Commit:
+
+```text
+667da43 1
+```
+
+### Commit 2
+
+```bash
+echo "hello" > cherry.txt
+git add .
+git commit -m "2"
+```
+
+Commit:
+
+```text
+0158ac4 2
+```
+
+### Commit 3
+
+```bash
+echo "this is second line" >> cherry.txt
+git add .
+git commit -m "3"
+```
+
+Commit:
+
+```text
+ee6eabe 3
+```
+
+The branch history was:
+
+```text
+ee6eabe 3
+0158ac4 2
+667da43 1
+```
+
+---
+
+## 2. Switch to Master
+
+I ran:
+
+```bash
+git checkout master
+```
+
+Then:
+
+```bash
+git status
+```
+
+Output:
+
+```text
+On branch master
+nothing to commit, working tree clean
+```
+
+---
+
+## 3. Cherry-Pick Only the Second Commit
+
+The second commit was:
+
+```text
+0158ac4
+```
+
+I first made a typo:
+
+```bash
+git cherr-pick 0158ac4
+```
+
+Git returned:
+
+```text
+git: 'cherr-pick' is not a git command.
+```
+
+### Correct Command
+
+```bash
+git cherry-pick 0158ac4
+```
+
+---
+
+## 4. Cherry-Pick Conflict
+
+The cherry-pick produced:
+
+```text
+CONFLICT (modify/delete): cherry.txt deleted in HEAD and modified in 0158ac4 (2).
+
+Version 0158ac4 (2) of cherry.txt left in tree.
+
+error: could not apply 0158ac4... 2
+```
+
+Git provided the following options:
+
+```bash
+git cherry-pick --continue
+git cherry-pick --skip
+git cherry-pick --abort
+```
+
+I resolved the file and staged it:
+
+```bash
+git add cherry.txt
+```
+
+I accidentally tried to start the cherry-pick again:
+
+```bash
+git cherry-pick 0158ac4
+```
+
+Git rejected it because the cherry-pick operation was already in progress.
+
+I then correctly continued:
+
+```bash
+git cherry-pick --continue
+```
+
+Git created:
+
+```text
+[master 2968e59] 2
+```
+
+### Observation
+
+The original commit was:
+
+```text
+0158ac4 2
+```
+
+The cherry-picked commit on `master` became:
+
+```text
+2968e59 2
+```
+
+This demonstrates that **cherry-pick creates a new commit on the target branch**.
+
+---
+
+## What Does Cherry-Pick Do?
+
+Cherry-pick takes the changes introduced by a specific commit and applies those changes to the current branch.
+
+### Basic Syntax
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+### When Would I Use Cherry-Pick?
+
+I would use cherry-pick when I need one particular fix or change from another branch without merging the entire branch.
+
+### Example
+
+```text
+feature-hotfix
+
+A → B → C
+    ↑
+   Fix
+
+        ↓ cherry-pick
+
+master
+
+X → Y → B'
+```
+
+The change from `B` is applied to `master` as a new commit `B'`.
+
+### What Can Go Wrong?
+
+Cherry-picking can result in conflicts if the selected commit changes files or lines that differ on the target branch.
+
+In my practice, `cherry.txt` produced a conflict, which I resolved before continuing.
+
+---
+
+# Commands Practiced
+
+## Merge
+
+```bash
+git merge <branch>
+git merge --squash <branch>
+```
+
+## Rebase
+
+```bash
+git rebase master
+```
+
+## Stash
+
+```bash
+git stash
+git stash list
+git stash pop
+git stash pop stash@{0}
+git stash apply stash@{0}
+```
+
+## Cherry-Pick
+
+```bash
+git cherry-pick <commit>
+git cherry-pick --continue
+git cherry-pick --skip
+git cherry-pick --abort
+```
+
+## History
+
+```bash
+git log --oneline
+git log --oneline --graph --all
+```
+
+---
+
+# Mistakes and Lessons Learned
+
+## Mistake 1 – Running Git Outside the Repository
+
+I ran:
+
+```bash
+git branch
+```
+
+Result:
+
+```text
+fatal: not a git repository
+```
+
+### Fix
+
+I entered the repository:
+
+```bash
+cd devops-git-practice/
+```
+
+---
+
+## Mistake 2 – `git addd`
+
+I accidentally typed:
+
+```bash
+git addd .
+```
+
+### Correct Command
+
+```bash
+git add .
+```
+
+---
+
+## Mistake 3 – `git git`
+
+I accidentally typed:
+
+```bash
+git git .
+```
+
+### Correct Command
+
+```bash
+git add .
+```
+
+---
+
+## Mistake 4 – `--online`
+
+I typed:
+
+```bash
+git log --online
+```
+
+### Correct Command
+
+```bash
+git log --oneline
+```
+
+---
+
+## Mistake 5 – Rebasing `main`
+
+I tried:
+
+```bash
+git rebase main
+```
+
+Result:
+
+```text
+fatal: invalid upstream 'main'
+```
+
+My repository uses:
+
+```text
+master
+```
+
+So I used:
+
+```bash
+git rebase master
+```
+
+---
+
+## Mistake 6 – `git pop`
+
+I typed:
+
+```bash
+git pop
+```
+
+### Correct Command
+
+```bash
+git stash pop
+```
+
+---
+
+## Mistake 7 – Using a Commit Hash for Stash
+
+I tried:
+
+```bash
+git stash pop a705ad5
+```
+
+### Correct Command
+
+```bash
+git stash pop stash@{0}
+```
+
+---
+
+## Mistake 8 – `cherr-pick`
+
+I typed:
+
+```bash
+git cherr-pick 0158ac4
+```
+
+### Correct Command
+
+```bash
+git cherry-pick 0158ac4
+```
+
+---
+
+## Mistake 9 – Starting Another Cherry-Pick During a Conflict
+
+After the cherry-pick entered a conflict state, I tried to start it again:
+
+```bash
+git cherry-pick 0158ac4
+```
+
+The correct action was:
+
+```bash
+# Resolve the conflict
+git add <file>
+
+# Continue the existing cherry-pick
+git cherry-pick --continue
+```
+
+---
+
+# Merge vs Rebase vs Squash vs Stash vs Cherry-Pick
+
+| Operation            | Purpose                                | Main Result                        |
+| -------------------- | -------------------------------------- | ---------------------------------- |
+| `git merge`          | Combines two branch histories          | May create a merge commit          |
+| `git rebase`         | Replays commits onto another base      | More linear history                |
+| `git merge --squash` | Combines changes from multiple commits | One new commit after manual commit |
+| `git stash`          | Temporarily stores uncommitted work    | Clean working directory            |
+| `git cherry-pick`    | Applies one specific commit            | Creates a new commit               |
+
+---
+
+# Quick Interview Comparison
+
+| Scenario                            | Command                           |
+| ----------------------------------- | --------------------------------- |
+| Combine complete feature branch     | `git merge feature-name`          |
+| Keep history linear                 | `git rebase master`               |
+| Combine many small feature commits  | `git merge --squash feature-name` |
+| Temporarily save unfinished work    | `git stash`                       |
+| Restore latest stash                | `git stash pop`                   |
+| Restore a specific stash            | `git stash pop stash@{0}`         |
+| Apply one specific commit           | `git cherry-pick <commit>`        |
+| Continue after cherry-pick conflict | `git cherry-pick --continue`      |
+| Cancel cherry-pick                  | `git cherry-pick --abort`         |
+| View branch history                 | `git log --oneline --graph --all` |
+
+---
+
+# Reflection
+
+## Fast-Forward Merge
+
+A fast-forward merge moves the target branch pointer forward because there are no independent commits on the target branch.
+
+```text
+A → B → C
+         ↑
+     master
+```
+
+No additional merge commit is required.
+
+---
+
+## Merge Commit
+
+A merge commit combines two diverged histories into one.
+
+```text
+      B---C
+     /     \
+A---D-------M
+```
+
+`M` represents the merge commit.
+
+---
+
+## Rebase
+
+Rebase replays commits on top of another base and produces a more linear history.
+
+```text
+Before:
+
+A---B---C
+     \
+      D---E
+
+
+After rebase:
+
+A---B---C---D'---E'
+```
+
+---
+
+## Squash
+
+Squash combines multiple commits' changes into one new commit on the target branch.
+
+```text
+Feature branch:
+
+A → B → C
+
+        ↓ squash
+
+Master:
+
+A → S
+```
+
+Where `S` contains the combined changes from `B` and `C`.
+
+---
+
+## Stash
+
+Stash temporarily stores unfinished work so I can switch branches without committing incomplete changes.
+
+```bash
+git stash
+git checkout another-branch
+```
+
+Later:
+
+```bash
+git stash pop
+```
+
+---
+
+## Cherry-Pick
+
+Cherry-pick lets me apply one particular commit without merging the entire branch.
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+---
+
+# Practical Git Workflow I Learned
+
+## 1. If I Need to Combine a Feature Branch
+
+```bash
+git checkout master
+git merge feature-name
+```
+
+---
+
+## 2. If I Need the Latest Master Changes on My Feature Branch
+
+```bash
+git checkout feature-name
+git rebase master
+```
+
+---
+
+## 3. If I Have Unfinished Work and Need to Switch Branches
+
+```bash
+git stash
+git checkout another-branch
+```
+
+Later:
+
+```bash
+git stash pop
+```
+
+---
+
+## 4. If I Need Only One Commit from Another Branch
+
+```bash
+git cherry-pick <commit-hash>
+```
+
+If there is a conflict:
+
+```bash
+# Resolve the conflicted file
+git add <file>
+
+# Continue the cherry-pick
+git cherry-pick --continue
+```
+
+---
+
+# Day 24 Summary
+
+| Task   | Topic        | Practice Result                                          |
+| ------ | ------------ | -------------------------------------------------------- |
+| Task 1 | Git Merge    | Fast-forward, merge commit, and merge conflict practiced |
+| Task 2 | Git Rebase   | Rebase onto `master` practiced                           |
+| Task 3 | Squash Merge | Squash merge practiced                                   |
+| Task 4 | Git Stash    | Multiple stashes and `stash pop` practiced               |
+| Task 5 | Cherry-Pick  | Specific commit selected and conflict resolved           |
+
+---
+
+# Key Takeaway
+
+Today I learned that Git provides different tools for different situations:
+
+```text
+Combine complete branches
+        ↓
+      MERGE
+
+Keep history linear
+        ↓
+      REBASE
+
+Combine multiple small commits
+        ↓
+      SQUASH
+
+Temporarily save unfinished work
+        ↓
+      STASH
+
+Take one specific commit
+        ↓
+   CHERRY-PICK
+```
+
+### Most Useful History Command
+
+The command I found especially useful for understanding the complete branch history was:
+
+```bash
+git log --oneline --graph --all
+```
+
+It makes **branch divergence, merges, rebases, and commit relationships** much easier to understand.
+
+---
+
+# Day 24 – Final Learning Checklist
+
+* [x] Understand Git branches
+* [x] Practice fast-forward merge
+* [x] Practice merge commit
+* [x] Create and resolve merge conflicts
+* [x] Understand Git rebase
+* [x] Understand merge vs rebase
+* [x] Practice squash merge
+* [x] Understand stash
+* [x] Create multiple stashes
+* [x] Apply a specific stash
+* [x] Understand `stash pop` vs `stash apply`
+* [x] Practice cherry-pick
+* [x] Resolve cherry-pick conflict
+* [x] Use `cherry-pick --continue`
+* [x] Use `git log --oneline --graph --all`
+* [x] Troubleshoot common Git command mistakes
+
+## Day 24 Complete ✅
+
+```text
+BRANCHES
+   │
+   ├── MERGE ────────→ Combine branch histories
+   │
+   ├── REBASE ───────→ Create linear history
+   │
+   ├── SQUASH ───────→ Combine multiple commits
+   │
+   ├── STASH ────────→ Temporarily save work
+   │
+   └── CHERRY-PICK ──→ Apply one specific commit
+```
+
+**Day 24 was focused on understanding not just Git commands, but when and why each Git operation should be used.**
