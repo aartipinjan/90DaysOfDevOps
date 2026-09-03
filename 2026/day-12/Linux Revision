@@ -1,0 +1,487 @@
+# Day 12 – Linux Fundamentals Revision (Days 01–11)
+
+## Objective
+
+Review the Linux concepts learned during Days 01–11 by revisiting key commands, practicing hands-on exercises, and identifying areas for improvement.
+
+---
+
+# 1. Mindset & Learning Plan
+
+## Goal
+
+Build a strong Linux foundation for DevOps by understanding:
+
+* Processes
+* Services
+* Users and groups
+* File permissions and ownership
+* Networking
+* File operations
+* Troubleshooting
+
+## Progress
+
+* ✅ Completed the Linux fundamentals covered during Days 01–11.
+* ✅ Practiced Linux commands regularly.
+* ✅ Improved confidence with file management, users, groups, permissions, and services.
+* ✅ Practiced basic Linux troubleshooting.
+* ✅ Ready to move toward Shell Scripting and Docker.
+
+---
+
+# 2. Process & Service Revision
+
+## Check Running Processes
+
+### Command
+
+```bash
+ps aux
+```
+
+### Observation
+
+Displayed running processes along with information such as CPU and memory usage.
+
+---
+
+## Check SSH Service
+
+### Command
+
+```bash
+systemctl status ssh
+```
+
+### Observation
+
+Verified that the SSH service is active and running.
+
+---
+
+## View SSH Logs
+
+### Command
+
+```bash
+journalctl -u ssh -n 20
+```
+
+### Observation
+
+Reviewed recent SSH service logs and found no SSH-related critical errors in the reviewed output.
+
+---
+
+# 3. File Operations Revision
+
+## Create Directory
+
+```bash
+mkdir revision-demo
+```
+
+### Observation
+
+Created a directory for revision practice.
+
+---
+
+## Create File
+
+```bash
+touch notes.txt
+```
+
+### Observation
+
+Created an empty file named `notes.txt`.
+
+---
+
+## Append Content
+
+```bash
+echo "Linux Revision Day" >> notes.txt
+```
+
+### Observation
+
+Appended text to `notes.txt` without overwriting existing content.
+
+---
+
+## Check Permissions
+
+```bash
+ls -l notes.txt
+```
+
+### Observation
+
+Verified the file's owner, group, and permissions.
+
+---
+
+## Copy File
+
+```bash
+cp notes.txt backup.txt
+```
+
+### Observation
+
+Created a copy of `notes.txt` named `backup.txt`.
+
+---
+
+## Change File Permissions
+
+For a normal text file:
+
+```bash
+chmod 644 backup.txt
+```
+
+### Observation
+
+Set the file permissions to:
+
+```text
+Owner  → read + write
+Group  → read
+Others → read
+```
+
+### Important
+
+`chmod 755` is commonly useful for directories and executable files/scripts, but a normal text file generally does not need execute permission.
+
+---
+
+# 4. Cheat Sheet Refresh
+
+## Five Commands I Would Use First During an Incident
+
+| Command                      | Why                                              |
+| ---------------------------- | ------------------------------------------------ |
+| `ps aux`                     | Check running processes and resource usage.      |
+| `top`                        | Monitor CPU, memory, and processes in real time. |
+| `systemctl status <service>` | Check service status.                            |
+| `journalctl -u <service>`    | Review service logs.                             |
+| `df -h`                      | Check filesystem disk usage.                     |
+
+### My Basic Incident Flow
+
+```text
+Problem Reported
+      ↓
+Check Process
+      ↓
+Check Service
+      ↓
+Check Resources
+      ↓
+Check Logs
+      ↓
+Check Network / Port
+      ↓
+Take Corrective Action
+      ↓
+Verify
+```
+
+---
+
+# 5. User & Group Revision
+
+## Check User Information
+
+```bash
+id tokyo
+```
+
+### Observation
+
+Displayed the user's UID, primary group, and supplementary groups.
+
+---
+
+## Check Groups
+
+```bash
+groups tokyo
+```
+
+### Observation
+
+Displayed the groups to which `tokyo` belongs.
+
+---
+
+## Verify Ownership
+
+```bash
+ls -l
+```
+
+### Observation
+
+Verified file ownership, group ownership, and permissions.
+
+---
+
+# 6. Mini Self-Check
+
+## 1. Which three commands save you the most time?
+
+### Answer
+
+```text
+ps aux
+```
+
+Quickly checks running processes and resource usage.
+
+```text
+systemctl status <service>
+```
+
+Checks whether a service is active, inactive, or failed.
+
+```text
+journalctl -u <service>
+```
+
+Helps investigate service-related logs and errors.
+
+---
+
+## 2. How do you check if a service is healthy?
+
+I would first check the service status:
+
+```bash
+systemctl status <service>
+```
+
+Then review recent logs:
+
+```bash
+journalctl -u <service> -n 50
+```
+
+Then check the process if necessary:
+
+```bash
+ps -ef | grep <process>
+```
+
+If the service provides a network endpoint, I would also verify its listening port:
+
+```bash
+ss -tuln
+```
+
+### Practical Approach
+
+```text
+Service Status
+      ↓
+Logs
+      ↓
+Process
+      ↓
+Port / Connectivity
+```
+
+---
+
+## 3. How do you safely change ownership and permissions?
+
+Example:
+
+```bash
+sudo chown tokyo:developers file.txt
+```
+
+Then set the required permissions:
+
+```bash
+chmod 640 file.txt
+```
+
+### Important
+
+Ownership and permissions are separate concepts:
+
+```text
+chown
+  ↓
+Owner / Group
+
+chmod
+  ↓
+Read / Write / Execute
+```
+
+---
+
+## 4. What will you improve in the next three days?
+
+* Practice Bash scripting.
+* Improve Linux troubleshooting.
+* Practice text-processing commands such as `grep`, `awk`, and `sed`.
+* Continue strengthening `find` and log-analysis skills.
+
+---
+
+# Commands Practiced
+
+```bash
+ps aux
+
+top
+
+systemctl status ssh
+
+journalctl -u ssh -n 20
+
+mkdir revision-demo
+
+touch notes.txt
+
+echo "Linux Revision Day" >> notes.txt
+
+cp notes.txt backup.txt
+
+ls -l notes.txt
+
+chmod 644 backup.txt
+
+id tokyo
+
+groups tokyo
+
+df -h
+```
+
+---
+
+# Key Takeaways
+
+* Linux command-line skills improve through regular hands-on practice.
+* Process monitoring helps identify resource and application issues.
+* `systemctl` is used to check and manage services.
+* `journalctl` is essential for investigating systemd service logs.
+* File permissions control access to files and directories.
+* File ownership determines the associated user and group.
+* User and group management helps organize controlled access.
+* `df -h` helps identify filesystem capacity problems.
+* A structured troubleshooting process reduces guesswork during incidents.
+* Strong Linux fundamentals provide a foundation for Docker, Kubernetes, Cloud, and other DevOps tools.
+
+---
+
+# Week 1–2 Summary
+
+## Topics Covered
+
+* Linux Architecture
+* Processes and Services
+* Linux Commands
+* Troubleshooting Basics
+* File Input & Output
+* Linux File System Hierarchy
+* Cloud Server Setup
+* Docker Installation Basics
+* Nginx and Web Server Verification
+* User & Group Management
+* File Permissions
+* File Ownership
+* Basic Networking
+* Log Analysis
+
+---
+
+# Linux Foundation Progress
+
+```text
+Linux Basics
+     ↓
+File Operations
+     ↓
+Filesystem Hierarchy
+     ↓
+Processes & Services
+     ↓
+Users & Groups
+     ↓
+Permissions & Ownership
+     ↓
+Networking
+     ↓
+Troubleshooting
+     ↓
+Cloud Server
+     ↓
+Docker
+```
+
+---
+
+# Conclusion
+
+The first twelve days established a strong Linux foundation.
+
+I practiced navigating the filesystem, managing users and groups, controlling permissions and ownership, monitoring processes and services, reviewing logs, checking networking, and troubleshooting common Linux issues.
+
+This foundation will support the next stage of my DevOps learning journey:
+
+```text
+Linux
+  ↓
+Shell Scripting
+  ↓
+Git / GitHub
+  ↓
+Docker
+  ↓
+Kubernetes
+  ↓
+OpenShift
+  ↓
+CI/CD
+  ↓
+Cloud & DevOps
+```
+
+### Final Learning
+
+> **I have built a practical Linux foundation and can now approach common system and service issues using a structured, evidence-based troubleshooting process.**
+
+### The two most important corrections
+
+**1. `chmod 755 backup.txt` → `chmod 644 backup.txt`**
+
+Because `backup.txt` is a normal text file, execute permission is generally unnecessary.
+
+**2. Service health**
+
+Instead of relying on:
+
+```bash
+ps aux | grep <service>
+```
+
+use:
+
+```text
+systemctl status
+        +
+journalctl
+        +
+process/port checks
+```
+
