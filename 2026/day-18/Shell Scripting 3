@@ -1,0 +1,624 @@
+
+# 🐚 Day 18 – Shell Scripting Cheat Sheet
+
+## 1. Function Syntax ⭐⭐⭐
+
+```bash
+function_name() {
+    commands
+}
+```
+
+Example:
+
+```bash
+greet() {
+    local name="$1"
+    echo "Hello, $name!"
+}
+
+greet "Shashank"
+```
+
+### Why functions?
+
+Functions help to:
+
+* Reuse code
+* Reduce duplication
+* Improve readability
+* Simplify troubleshooting
+* Organize large scripts
+
+---
+
+# 2. Function Arguments
+
+Function arguments work like script arguments.
+
+```bash
+add() {
+    local num1="$1"
+    local num2="$2"
+
+    echo $((num1 + num2))
+}
+
+add 10 20
+```
+
+Inside the function:
+
+```text
+$1 → First function argument
+$2 → Second function argument
+$# → Number of function arguments
+$@ → All function arguments
+```
+
+---
+
+# 3. `echo` vs `return` ⭐⭐⭐
+
+This is an important Bash concept.
+
+### `echo`
+
+Used to produce output:
+
+```bash
+add() {
+    echo $((10 + 20))
+}
+
+result=$(add)
+echo "$result"
+```
+
+Output:
+
+```text
+30
+```
+
+### `return`
+
+Used to return an **exit status** from a function.
+
+```bash
+check_service() {
+    systemctl is-active --quiet nginx
+    return $?
+}
+```
+
+Then:
+
+```bash
+if check_service; then
+    echo "Nginx is running"
+else
+    echo "Nginx is not running"
+fi
+```
+
+### Remember
+
+```text
+echo
+ ↓
+Returns/displays data
+
+return
+ ↓
+Returns an exit status
+```
+
+A Bash function's `return` status is normally `0–255`.
+
+---
+
+# 4. Capture Function Output
+
+Command substitution:
+
+```bash
+result=$(function_name)
+```
+
+Example:
+
+```bash
+get_hostname() {
+    hostname
+}
+
+HOST=$(get_hostname)
+
+echo "Server: $HOST"
+```
+
+This is extremely useful in DevOps scripts.
+
+---
+
+# 5. Local Variables ⭐⭐⭐
+
+Use:
+
+```bash
+local VARIABLE="value"
+```
+
+Example:
+
+```bash
+demo() {
+    local NAME="Linux"
+    echo "$NAME"
+}
+```
+
+The variable is local to the function.
+
+### Why use `local`?
+
+Without `local`:
+
+```bash
+demo() {
+    NAME="Linux"
+}
+```
+
+the function can modify a variable in the surrounding shell scope.
+
+With:
+
+```bash
+local NAME="Linux"
+```
+
+the variable is limited to the function.
+
+**Best practice:** Use `local` for function-specific variables.
+
+---
+
+# 6. Strict Mode ⭐⭐⭐
+
+Recommended pattern:
+
+```bash
+set -euo pipefail
+```
+
+| Option     | Meaning                          |
+| ---------- | -------------------------------- |
+| `-e`       | Exit when a command fails        |
+| `-u`       | Treat unset variables as errors  |
+| `pipefail` | Detect failures within pipelines |
+
+Example:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+```
+
+### `-e`
+
+```bash
+false
+echo "Hello"
+```
+
+With `set -e`, the script normally stops after `false`.
+
+### `-u`
+
+```bash
+set -u
+
+echo "$NAME"
+```
+
+If `NAME` is unset, Bash reports an error.
+
+### `pipefail`
+
+```bash
+set -o pipefail
+
+false | true
+```
+
+With `pipefail`, the pipeline has a failure status because `false` failed.
+
+---
+
+# 7. Safe Variable Expansion ⭐⭐
+
+With strict mode:
+
+```bash
+set -u
+```
+
+this can cause an error:
+
+```bash
+echo "$NAME"
+```
+
+if `NAME` is unset.
+
+You can provide a default:
+
+```bash
+echo "${NAME:-Unknown}"
+```
+
+Meaning:
+
+```text
+If NAME exists → use NAME
+If NAME is unset/empty → use Unknown
+```
+
+This is what your `local_demo.sh` uses:
+
+```bash
+${LOCAL_VAR:-not available}
+```
+
+---
+
+# 8. `main()` Function ⭐⭐⭐
+
+For larger scripts, organize the script using a `main` function.
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+check_disk() {
+    df -h /
+}
+
+check_memory() {
+    free -h
+}
+
+main() {
+    check_disk
+    check_memory
+}
+
+main
+```
+
+This makes the script easier to read:
+
+```text
+Script starts
+     ↓
+Define functions
+     ↓
+main()
+     ↓
+Call functions
+     ↓
+Output
+```
+
+---
+
+# 9. Source `/etc/os-release`
+
+Your script uses:
+
+```bash
+. /etc/os-release
+```
+
+This loads OS information into the current shell.
+
+Then:
+
+```bash
+echo "$PRETTY_NAME"
+```
+
+might produce:
+
+```text
+Ubuntu 24.04 LTS
+```
+
+Other useful variables include:
+
+```bash
+echo "$NAME"
+echo "$VERSION"
+echo "$VERSION_ID"
+echo "$PRETTY_NAME"
+```
+
+Very useful when writing scripts that need to behave differently on different Linux distributions.
+
+---
+
+# 10. Useful System Information Commands
+
+### Hostname
+
+```bash
+hostname
+```
+
+### OS
+
+```bash
+cat /etc/os-release
+```
+
+### Uptime
+
+```bash
+uptime
+```
+
+### Memory
+
+```bash
+free -h
+```
+
+### Disk
+
+```bash
+df -h
+```
+
+### Directory size
+
+```bash
+du -sh /var
+```
+
+### Processes
+
+```bash
+ps aux
+```
+
+### Top CPU processes
+
+```bash
+ps aux --sort=-%cpu | head
+```
+
+### Top memory processes
+
+```bash
+ps aux --sort=-%mem | head
+```
+
+---
+
+# 11. Redirect Errors
+
+Your script uses:
+
+```bash
+2>/dev/null
+```
+
+This means:
+
+```text
+2      → stderr
+>      → redirect
+/dev/null → discard output
+```
+
+Example:
+
+```bash
+du -xhd 1 / 2>/dev/null
+```
+
+This prevents permission-denied messages from cluttering the output.
+
+---
+
+# 12. Pipes ⭐
+
+```bash
+command1 | command2
+```
+
+Example:
+
+```bash
+ps aux | grep nginx
+```
+
+Another:
+
+```bash
+du -sh /var/* | sort -hr | head
+```
+
+The output of one command becomes the input of the next.
+
+---
+
+# 13. Error Handling Pattern
+
+A useful pattern:
+
+```bash
+if command; then
+    echo "Command successful"
+else
+    echo "Command failed"
+    exit 1
+fi
+```
+
+Example:
+
+```bash
+if systemctl restart nginx; then
+    echo "Nginx restarted successfully"
+else
+    echo "Failed to restart Nginx"
+    exit 1
+fi
+```
+
+---
+
+# 14. DevOps Function Example ⭐⭐⭐
+
+A practical service-check script:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+check_service() {
+    local service="$1"
+
+    if systemctl is-active --quiet "$service"; then
+        echo "$service: RUNNING"
+    else
+        echo "$service: NOT RUNNING"
+        return 1
+    fi
+}
+
+main() {
+    check_service nginx
+    check_service ssh
+}
+
+main
+```
+
+This demonstrates almost everything from Day 18:
+
+```text
+Strict Mode
+    ↓
+Function
+    ↓
+Local Variable
+    ↓
+Function Argument
+    ↓
+Condition
+    ↓
+systemctl
+    ↓
+Return Status
+```
+
+---
+
+# 🎯 Day 18 Interview Questions
+
+### Basic
+
+1. What is a function in Bash?
+2. Why do we use functions?
+3. How do you pass arguments to a function?
+4. What is `$1` inside a function?
+5. What is a local variable?
+6. Why should we use `local`?
+
+### Intermediate
+
+7. Difference between `echo` and `return`?
+8. What does `set -e` do?
+9. What does `set -u` do?
+10. What is `pipefail`?
+11. What does `set -euo pipefail` mean?
+12. What is command substitution?
+13. How do you capture the output of a function?
+14. How do you check the exit status of a function?
+15. Why use a `main()` function?
+
+### ⭐ DevOps Interview Questions
+
+16. How would you write a reusable function to check whether a service is running?
+
+17. How would you write a function to check disk usage?
+
+18. How would you make a Bash script fail safely?
+
+19. How would you write one script that works on both Ubuntu and RHEL?
+
+20. How would you create a Linux server health-check script?
+
+---
+
+# 🧠 Day 18 Progress
+
+Your shell scripting journey is now:
+
+```text
+Day 16
+│
+├── Variables
+├── Input
+└── Conditions
+        ↓
+Day 17
+│
+├── Loops
+├── Arguments
+├── Package Automation
+└── Error Handling
+        ↓
+Day 18
+│
+├── Functions
+├── Local Variables
+├── Strict Mode
+├── Return Status
+└── System Information
+        ↓
+REAL DEVOPS AUTOMATION
+```
+
+### ⭐ Most important concepts to remember
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+function_name() {
+    local variable="$1"
+
+    if command; then
+        echo "Success"
+        return 0
+    else
+        echo "Failure"
+        return 1
+    fi
+}
+
+main() {
+    function_name "value"
+}
+
+main
+```
