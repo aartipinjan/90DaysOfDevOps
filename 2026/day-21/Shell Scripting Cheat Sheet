@@ -1,0 +1,1129 @@
+# 🐚 Day 21 – Shell Scripting Cheat Sheet
+
+### 90 Days of DevOps | Shell Scripting Revision
+
+> **Purpose:** Quick-reference for revising Bash and DevOps scripting concepts practiced during Days 16–20.
+
+---
+
+## 1. Quick Reference
+
+| Topic       | Key Syntax                | Example                            | Purpose                        |
+| ----------- | ------------------------- | ---------------------------------- | ------------------------------ |
+| Shebang     | `#!/bin/bash`             | `#!/bin/bash`                      | Defines Bash interpreter       |
+| Variable    | `VAR="value"`             | `NAME="Aarti"`                     | Store data                     |
+| Input       | `read`                    | `read -p "Name: " NAME`            | Accept user input              |
+| Argument    | `$1`, `$2`                | `./script.sh arg1`                 | Pass values to script          |
+| If          | `if [ condition ]; then`  | `if [ -f file ]; then`             | Decision making                |
+| For loop    | `for i in list; do`       | `for i in 1 2 3; do`               | Repeat commands                |
+| While loop  | `while [ condition ]; do` | `while [ "$COUNT" -gt 0 ]; do`     | Repeat while condition is true |
+| Function    | `name() { ... }`          | `greet() { echo "Hi"; }`           | Reusable code                  |
+| Grep        | `grep pattern file`       | `grep -i "error" log.txt`          | Search text                    |
+| Awk         | `awk '{print $1}' file`   | `awk -F: '{print $1}' /etc/passwd` | Process columns/text           |
+| Sed         | `sed 's/old/new/g' file`  | `sed -i 's/foo/bar/g' config.txt`  | Search/replace text            |
+| Find        | `find path condition`     | `find /var/log -name "*.log"`      | Find files/directories         |
+| Exit code   | `$?`                      | `echo $?`                          | Check previous command status  |
+| Strict mode | `set -euo pipefail`       | `set -euo pipefail`                | Safer scripting                |
+| Trap        | `trap 'cleanup' EXIT`     | `trap 'rm -f "$TMP"' EXIT`         | Cleanup on exit                |
+
+---
+
+# 2. Shell Script Basics
+
+### Shebang
+
+```bash
+#!/bin/bash
+```
+
+The shebang tells the operating system which interpreter should run the script.
+
+### Running a Script
+
+| Task                  | Command              |
+| --------------------- | -------------------- |
+| Make executable       | `chmod +x script.sh` |
+| Run executable script | `./script.sh`        |
+| Run using Bash        | `bash script.sh`     |
+
+### Comments
+
+```bash
+# This is a comment
+
+echo "Hello, DevOps!"  # Inline comment
+```
+
+---
+
+# 3. Variables
+
+### Create Variables
+
+```bash
+NAME="Aarti"
+ROLE="DevOps Engineer"
+```
+
+### Use Variables
+
+```bash
+echo "$NAME"
+echo "$ROLE"
+echo "Hello, $NAME"
+```
+
+### Important Rule
+
+❌ Incorrect:
+
+```bash
+NAME = "Aarti"
+```
+
+✅ Correct:
+
+```bash
+NAME="Aarti"
+```
+
+**No spaces around `=`.**
+
+---
+
+# 4. Single vs Double Quotes
+
+| Quote        | Variable Expansion | Example              | Output        |
+| ------------ | ------------------ | -------------------- | ------------- |
+| Double `" "` | Yes                | `echo "Hello $NAME"` | `Hello Aarti` |
+| Single `' '` | No                 | `echo 'Hello $NAME'` | `Hello $NAME` |
+
+---
+
+# 5. User Input
+
+### Single Input
+
+```bash
+read -p "Enter your name: " NAME
+echo "Hello $NAME"
+```
+
+### Multiple Inputs
+
+```bash
+read -p "Name: " NAME
+read -p "Favourite tool: " TOOL
+
+echo "Hello $NAME, your favourite tool is $TOOL"
+```
+
+---
+
+# 6. Command-Line Arguments
+
+| Variable | Meaning                         |
+| -------- | ------------------------------- |
+| `$0`     | Script name                     |
+| `$1`     | First argument                  |
+| `$2`     | Second argument                 |
+| `$#`     | Number of arguments             |
+| `$@`     | All arguments                   |
+| `$?`     | Exit status of previous command |
+
+### Example
+
+```bash
+#!/bin/bash
+
+echo "Script: $0"
+echo "First argument: $1"
+echo "Second argument: $2"
+echo "Total arguments: $#"
+echo "All arguments: $@"
+```
+
+Run:
+
+```bash
+./args_demo.sh Aarti DevOps
+```
+
+---
+
+# 7. String Comparisons
+
+| Operator | Meaning          | Example                  |
+| -------- | ---------------- | ------------------------ |
+| `=`      | Equal            | `[ "$NAME" = "Aarti" ]`  |
+| `!=`     | Not equal        | `[ "$NAME" != "Aarti" ]` |
+| `-z`     | Empty string     | `[ -z "$NAME" ]`         |
+| `-n`     | Non-empty string | `[ -n "$NAME" ]`         |
+
+### Example
+
+```bash
+if [ "$NAME" = "Aarti" ]; then
+    echo "Name matches"
+fi
+```
+
+---
+
+# 8. Integer Comparisons
+
+| Operator | Meaning               |
+| -------- | --------------------- |
+| `-eq`    | Equal                 |
+| `-ne`    | Not equal             |
+| `-lt`    | Less than             |
+| `-gt`    | Greater than          |
+| `-le`    | Less than or equal    |
+| `-ge`    | Greater than or equal |
+
+### Example
+
+```bash
+if [ "$NUMBER" -gt 0 ]; then
+    echo "Positive"
+elif [ "$NUMBER" -lt 0 ]; then
+    echo "Negative"
+else
+    echo "Zero"
+fi
+```
+
+---
+
+# 9. File Test Operators
+
+| Test | Meaning                      |
+| ---- | ---------------------------- |
+| `-f` | Regular file exists          |
+| `-d` | Directory exists             |
+| `-e` | Path exists                  |
+| `-r` | Readable                     |
+| `-w` | Writable                     |
+| `-x` | Executable                   |
+| `-s` | File exists and is not empty |
+
+### Examples
+
+```bash
+[ -f "notes.txt" ]
+[ -d "/tmp/devops" ]
+[ -x "script.sh" ]
+```
+
+---
+
+# 10. If / Elif / Else
+
+```bash
+if [ condition ]; then
+    # commands
+elif [ another_condition ]; then
+    # commands
+else
+    # commands
+fi
+```
+
+### Example
+
+```bash
+if [ "$STATUS" = "running" ]; then
+    echo "Service is running"
+else
+    echo "Service is not running"
+fi
+```
+
+---
+
+# 11. Logical Operators
+
+| Operator | Meaning |
+| -------- | ------- |
+| `&&`     | AND     |
+| `\|\|`   | OR      |
+| `!`      | NOT     |
+
+### AND
+
+```bash
+if [ -f "$FILE" ] && [ -r "$FILE" ]; then
+    echo "File exists and is readable"
+fi
+```
+
+### OR
+
+```bash
+if [ -f "$FILE" ] || [ -d "$FILE" ]; then
+    echo "Path exists"
+fi
+```
+
+### NOT
+
+```bash
+if ! [ -f "$FILE" ]; then
+    echo "File does not exist"
+fi
+```
+
+---
+
+# 12. Case Statement
+
+Useful when handling multiple choices.
+
+```bash
+case "$CHOICE" in
+    y)
+        echo "Yes"
+        ;;
+    n)
+        echo "No"
+        ;;
+    *)
+        echo "Invalid choice"
+        ;;
+esac
+```
+
+| Symbol      | Purpose    |
+| ----------- | ---------- |
+| `case`      | Start      |
+| `y)` / `n)` | Pattern    |
+| `;;`        | End option |
+| `*`         | Default    |
+| `esac`      | End        |
+
+---
+
+# 13. For Loops
+
+### List-Based
+
+```bash
+for fruit in apple banana mango orange grape; do
+    echo "$fruit"
+done
+```
+
+### Number Loop
+
+```bash
+for i in 1 2 3 4 5; do
+    echo "$i"
+done
+```
+
+### C-Style Loop
+
+```bash
+for ((i=1; i<=10; i++)); do
+    echo "$i"
+done
+```
+
+---
+
+# 14. While Loop
+
+```bash
+COUNT=5
+
+while [ "$COUNT" -gt 0 ]; do
+    echo "$COUNT"
+    COUNT=$((COUNT - 1))
+done
+
+echo "Done!"
+```
+
+**Remember:** `while` runs while the condition is true.
+
+---
+
+# 15. Until Loop
+
+```bash
+COUNT=1
+
+until [ "$COUNT" -gt 5 ]; do
+    echo "$COUNT"
+    COUNT=$((COUNT + 1))
+done
+```
+
+**Remember:** `until` runs until the condition becomes true.
+
+---
+
+# 16. Loop Control
+
+| Command    | Purpose                |
+| ---------- | ---------------------- |
+| `break`    | Stop the loop          |
+| `continue` | Skip current iteration |
+
+### Break
+
+```bash
+for i in 1 2 3 4 5; do
+    if [ "$i" -eq 3 ]; then
+        break
+    fi
+
+    echo "$i"
+done
+```
+
+### Continue
+
+```bash
+for i in 1 2 3 4 5; do
+    if [ "$i" -eq 3 ]; then
+        continue
+    fi
+
+    echo "$i"
+done
+```
+
+---
+
+# 17. Looping Over Files
+
+```bash
+for file in *.log; do
+    echo "$file"
+done
+```
+
+Useful for processing multiple log files.
+
+---
+
+# 18. Reading Command Output
+
+### Read File Line by Line
+
+```bash
+while read -r line; do
+    echo "$line"
+done < file.txt
+```
+
+---
+
+# 19. Functions
+
+### Define
+
+```bash
+greet() {
+    echo "Hello, DevOps!"
+}
+```
+
+### Call
+
+```bash
+greet
+```
+
+### Function Arguments
+
+```bash
+greet() {
+    echo "Hello, $1!"
+}
+
+greet "Aarti"
+```
+
+### Multiple Arguments
+
+```bash
+add() {
+    echo $(( $1 + $2 ))
+}
+
+add 10 20
+```
+
+---
+
+# 20. Function Return Values
+
+### Return Exit Status
+
+```bash
+check_file() {
+    if [ -f "$1" ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+```
+
+Check result:
+
+```bash
+check_file "notes.txt"
+
+if [ $? -eq 0 ]; then
+    echo "File exists"
+fi
+```
+
+### Return Actual Data
+
+Use `echo`:
+
+```bash
+get_name() {
+    echo "Aarti"
+}
+
+NAME=$(get_name)
+
+echo "$NAME"
+```
+
+---
+
+# 21. Local Variables
+
+Use `local` inside functions.
+
+```bash
+demo() {
+    local MESSAGE="Hello"
+    echo "$MESSAGE"
+}
+
+demo
+```
+
+| Variable Type    | Scope                      |
+| ---------------- | -------------------------- |
+| Normal variable  | Available outside function |
+| `local` variable | Limited to function        |
+
+---
+
+# 22. `grep`
+
+| Option | Meaning          | Example                           |
+| ------ | ---------------- | --------------------------------- |
+| `-i`   | Case-insensitive | `grep -i error app.log`           |
+| `-r`   | Recursive        | `grep -r ERROR /var/log`          |
+| `-c`   | Count            | `grep -c ERROR app.log`           |
+| `-n`   | Line numbers     | `grep -n ERROR app.log`           |
+| `-v`   | Invert match     | `grep -v INFO app.log`            |
+| `-E`   | Extended regex   | `grep -E "ERROR\|Failed" app.log` |
+
+### Common Commands
+
+```bash
+grep "ERROR" app.log
+grep -i "error" app.log
+grep -r "ERROR" /var/log
+grep -c "ERROR" app.log
+grep -n "ERROR" app.log
+grep -v "INFO" app.log
+grep -E "ERROR|Failed" app.log
+```
+
+---
+
+# 23. `awk`
+
+| Task                   | Command                                                              |
+| ---------------------- | -------------------------------------------------------------------- |
+| Print first column     | `awk '{print $1}' file.txt`                                          |
+| Print multiple columns | `awk '{print $1, $3}' file.txt`                                      |
+| Use delimiter          | `awk -F: '{print $1}' /etc/passwd`                                   |
+| Pattern matching       | `awk '/ERROR/ {print}' app.log`                                      |
+| BEGIN/END              | `awk 'BEGIN {print "Start"} {print $1} END {print "Done"}' file.txt` |
+
+---
+
+# 24. `sed`
+
+| Task                  | Command                           |
+| --------------------- | --------------------------------- |
+| Replace text          | `sed 's/old/new/g' file.txt`      |
+| Delete line 5         | `sed '5d' file.txt`               |
+| Delete matching lines | `sed '/ERROR/d' file.txt`         |
+| In-place replacement  | `sed -i 's/foo/bar/g' config.txt` |
+
+---
+
+# 25. `cut`
+
+| Task               | Command                   |
+| ------------------ | ------------------------- |
+| Extract field      | `cut -d: -f1 /etc/passwd` |
+| Extract characters | `cut -c1-10 file.txt`     |
+
+---
+
+# 26. `sort`
+
+| Option                | Meaning              |
+| --------------------- | -------------------- |
+| `sort file.txt`       | Alphabetical sorting |
+| `sort -n numbers.txt` | Numeric sorting      |
+| `sort -r file.txt`    | Reverse sorting      |
+| `sort -u file.txt`    | Unique sorting       |
+
+---
+
+# 27. `uniq`
+
+| Command                    | Purpose                       |
+| -------------------------- | ----------------------------- |
+| `uniq file.txt`            | Remove consecutive duplicates |
+| `uniq -c file.txt`         | Count duplicates              |
+| `sort file.txt \| uniq -c` | Sort and count duplicates     |
+
+---
+
+# 28. `tr`
+
+```bash
+echo "hello" | tr 'a-z' 'A-Z'
+```
+
+Output:
+
+```text
+HELLO
+```
+
+Delete characters:
+
+```bash
+echo "hello123" | tr -d '0-9'
+```
+
+---
+
+# 29. `wc`
+
+| Command          | Purpose          |
+| ---------------- | ---------------- |
+| `wc -l file.txt` | Count lines      |
+| `wc -w file.txt` | Count words      |
+| `wc -c file.txt` | Count characters |
+
+---
+
+# 30. `head` and `tail`
+
+| Command                 | Purpose                 |
+| ----------------------- | ----------------------- |
+| `head -n 5 file.txt`    | First 5 lines           |
+| `tail -n 5 file.txt`    | Last 5 lines            |
+| `tail -f app.log`       | Follow log in real time |
+| `tail -n 50 -f app.log` | Last 50 lines + follow  |
+
+---
+
+# 31. `find`
+
+| Requirement       | Command                                 |
+| ----------------- | --------------------------------------- |
+| Find `.log` files | `find /var/log -name "*.log"`           |
+| Older than 7 days | `find /var/log -name "*.log" -mtime +7` |
+| Delete old files  | `find /tmp -type f -mtime +7 -delete`   |
+| Find directories  | `find . -type d -name "logs"`           |
+| Execute command   | `find . -name "*.log" -exec gzip {} \;` |
+
+---
+
+# 32. Useful DevOps One-Liners
+
+| Task               | Command                                                          |
+| ------------------ | ---------------------------------------------------------------- |
+| Find large files   | `du -sh * \| sort -h \| tail -5`                                 |
+| Count errors       | `grep -ci "error" app.log`                                       |
+| Follow errors      | `tail -f app.log \| grep --line-buffered -i "error"`             |
+| Compress old logs  | `find /var/log -name "*.log" -mtime +7 -exec gzip {} \;`         |
+| Replace text       | `sed -i 's/old/new/g' *.conf`                                    |
+| Count log lines    | `wc -l *.log`                                                    |
+| Top error messages | `grep "ERROR" app.log \| sort \| uniq -c \| sort -rn \| head -5` |
+| Check file         | `[ -f "app.log" ] && echo "Exists" \|\| echo "Missing"`          |
+
+---
+
+# 33. Exit Codes
+
+| Exit Code | Meaning |
+| --------- | ------- |
+| `0`       | Success |
+| Non-zero  | Failure |
+
+### Success
+
+```bash
+exit 0
+```
+
+### Failure
+
+```bash
+exit 1
+```
+
+### Check Status
+
+```bash
+echo $?
+```
+
+---
+
+# 34. Error Handling
+
+### `set -e`
+
+Exit script when a command fails.
+
+```bash
+set -e
+```
+
+### `set -u`
+
+Treat unset variables as errors.
+
+```bash
+set -u
+```
+
+### `pipefail`
+
+Detect failures inside pipelines.
+
+```bash
+set -o pipefail
+```
+
+### Strict Mode
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+```
+
+| Option     | Meaning                  |
+| ---------- | ------------------------ |
+| `-e`       | Exit when command fails  |
+| `-u`       | Error on unset variables |
+| `pipefail` | Detect pipeline failures |
+
+---
+
+# 35. Debugging with `set -x`
+
+```bash
+#!/bin/bash
+
+set -x
+
+echo "Starting script"
+mkdir /tmp/devops-test
+echo "Finished"
+```
+
+Disable:
+
+```bash
+set +x
+```
+
+---
+
+# 36. `trap`
+
+Use `trap` for cleanup when a script exits.
+
+```bash
+TMP="/tmp/devops-temp"
+
+touch "$TMP"
+
+cleanup() {
+    rm -f "$TMP"
+}
+
+trap 'cleanup' EXIT
+```
+
+| Command   | Purpose           |
+| --------- | ----------------- |
+| `trap`    | Catch an event    |
+| `EXIT`    | When script exits |
+| `cleanup` | Cleanup function  |
+
+---
+
+# 37. Practical Script Template
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+usage() {
+    echo "Usage: $0 <argument>"
+    exit 1
+}
+
+cleanup() {
+    echo "Cleaning up..."
+}
+
+trap 'cleanup' EXIT
+
+if [ $# -lt 1 ]; then
+    usage
+fi
+
+INPUT="$1"
+
+echo "Processing: $INPUT"
+```
+
+---
+
+# 38. Log Analyzer Pattern
+
+### Count Errors
+
+```bash
+ERROR_COUNT=$(grep -Ei "ERROR|Failed" "$LOG_FILE" | wc -l)
+```
+
+### Critical Events
+
+```bash
+grep -n "CRITICAL" "$LOG_FILE"
+```
+
+### Top Error Messages
+
+```bash
+grep "ERROR" "$LOG_FILE" |
+    awk '{$1=$2=$3=""; print}' |
+    sort |
+    uniq -c |
+    sort -rn |
+    head -5
+```
+
+### Pipeline
+
+```text
+Log File
+   ↓
+grep
+   ↓
+awk
+   ↓
+sort
+   ↓
+uniq -c
+   ↓
+sort -rn
+   ↓
+head -5
+```
+
+---
+
+# 39. Backup Pattern
+
+### Create Timestamp
+
+```bash
+DATE=$(date +%Y-%m-%d)
+```
+
+### Create Compressed Backup
+
+```bash
+tar -czf "backup-${DATE}.tar.gz" /source/directory
+```
+
+### Verify
+
+```bash
+if [ -f "backup-${DATE}.tar.gz" ]; then
+    echo "Backup created successfully"
+fi
+```
+
+---
+
+# 40. Cron Cheat Sheet
+
+### Cron Format
+
+```text
+* * * * * command
+│ │ │ │ │
+│ │ │ │ └── Day of week
+│ │ │ └──── Month
+│ │ └────── Day of month
+│ └──────── Hour
+└────────── Minute
+```
+
+| Requirement          | Cron          |
+| -------------------- | ------------- |
+| Every 5 minutes      | `*/5 * * * *` |
+| Every day at 2 AM    | `0 2 * * *`   |
+| Every Sunday at 3 AM | `0 3 * * 0`   |
+| View jobs            | `crontab -l`  |
+| Edit jobs            | `crontab -e`  |
+
+---
+
+# 41. Script Debugging Checklist
+
+| Check             | Command              |
+| ----------------- | -------------------- |
+| Syntax check      | `bash -n script.sh`  |
+| Debug execution   | `bash -x script.sh`  |
+| Check permissions | `ls -l script.sh`    |
+| Make executable   | `chmod +x script.sh` |
+| Run script        | `./script.sh`        |
+| Check exit status | `echo $?`            |
+
+---
+
+# 42. Practical DevOps Workflow
+
+```text
+1. Define the input
+       ↓
+2. Validate input
+       ↓
+3. Check prerequisites
+       ↓
+4. Perform the operation
+       ↓
+5. Check exit status
+       ↓
+6. Handle errors
+       ↓
+7. Log useful information
+       ↓
+8. Clean up temporary files
+       ↓
+9. Exit with the correct status
+```
+
+---
+
+# 43. Flags I Should Actually Remember
+
+## `grep`
+
+| Flag | Meaning           |
+| ---- | ----------------- |
+| `-i` | Case-insensitive  |
+| `-r` | Recursive         |
+| `-c` | Count             |
+| `-n` | Line numbers      |
+| `-v` | Invert match      |
+| `-E` | Extended patterns |
+
+## `head` / `tail`
+
+| Flag    | Meaning         |
+| ------- | --------------- |
+| `-n 50` | Number of lines |
+| `-f`    | Follow output   |
+
+## `sort`
+
+| Flag | Meaning |
+| ---- | ------- |
+| `-n` | Numeric |
+| `-r` | Reverse |
+| `-u` | Unique  |
+
+## `find`
+
+| Option    | Purpose                     |
+| --------- | --------------------------- |
+| `-name`   | Search by name              |
+| `-type`   | Search by file type         |
+| `-mtime`  | Search by modification time |
+| `-exec`   | Execute command             |
+| `-delete` | Delete result               |
+
+> **Important:** Don't memorize every flag. Understand the command, remember the commonly used flags, and use `man <command>` or `<command> --help` when needed.
+
+```bash
+man grep
+grep --help
+
+man find
+find --help
+```
+
+---
+
+# 44. Most Important Commands for DevOps
+
+| Category        | Commands                     |
+| --------------- | ---------------------------- |
+| Processes       | `ps aux`, `top`              |
+| CPU/Memory      | `top`, `free -h`             |
+| Disk            | `df -h`, `du -sh *`          |
+| Files           | `ls -l`, `find`              |
+| Logs            | `grep`, `tail -f`            |
+| Text processing | `awk`, `sed`                 |
+| Network         | `curl`, `ping`, `ss`, `dig`  |
+| Services        | `systemctl status <service>` |
+| Service logs    | `journalctl -u <service>`    |
+
+---
+
+# 45. Shell Scripting Commands to Remember
+
+```text
+echo
+read
+if
+case
+for
+while
+until
+function
+grep
+awk
+sed
+find
+sort
+uniq
+cut
+wc
+head
+tail
+set -euo pipefail
+$?
+$1
+$@
+$#
+```
+
+---
+
+# 🎯 46. Final Interview Revision Table
+
+| Area            | Must Know                                           |
+| --------------- | --------------------------------------------------- |
+| Variables       | `$VAR`, quoting                                     |
+| Arguments       | `$0`, `$1`, `$2`, `$#`, `$@`                        |
+| Conditions      | `if`, `elif`, `else`                                |
+| String tests    | `=`, `!=`, `-z`, `-n`                               |
+| Numeric tests   | `-eq`, `-ne`, `-lt`, `-gt`, `-le`, `-ge`            |
+| File tests      | `-f`, `-d`, `-e`, `-r`, `-w`, `-x`                  |
+| Loops           | `for`, `while`, `until`                             |
+| Loop control    | `break`, `continue`                                 |
+| Functions       | Arguments, `local`, `return`                        |
+| Text processing | `grep`, `awk`, `sed`, `cut`                         |
+| Sorting         | `sort`, `uniq`                                      |
+| Files           | `find`                                              |
+| Logs            | `grep`, `tail -f`, `awk`                            |
+| Error handling  | `$?`, `set -euo pipefail`                           |
+| Debugging       | `bash -n`, `bash -x`                                |
+| Cleanup         | `trap`                                              |
+| Scheduling      | `cron`                                              |
+| Backup          | `tar`, timestamp, rotation                          |
+| Automation      | Input → Validate → Execute → Verify → Log → Cleanup |
+
+---
+
+# ✅ Day 21 Checklist
+
+* [x] Shebang
+* [x] Variables
+* [x] User input
+* [x] Command-line arguments
+* [x] Conditions
+* [x] String comparisons
+* [x] Integer comparisons
+* [x] File tests
+* [x] Logical operators
+* [x] Case statement
+* [x] For loops
+* [x] While loops
+* [x] Until loops
+* [x] `break`
+* [x] `continue`
+* [x] Functions
+* [x] Function arguments
+* [x] `local`
+* [x] Return values
+* [x] `grep`
+* [x] `awk`
+* [x] `sed`
+* [x] `cut`
+* [x] `sort`
+* [x] `uniq`
+* [x] `tr`
+* [x] `wc`
+* [x] `head`
+* [x] `tail`
+* [x] `find`
+* [x] Exit codes
+* [x] `set -e`
+* [x] `set -u`
+* [x] `pipefail`
+* [x] `set -x`
+* [x] `trap`
+* [x] Cron basics
+* [x] Log analysis
+* [x] Backup patterns
+* [x] Script debugging
+* [x] DevOps automation workflow
+
+---
+
+# 🚀 My Day 21 Takeaway
+
+> **Shell scripting is not about memorizing commands. It is about combining simple Linux commands to automate repetitive DevOps tasks.**
+
+```text
+Linux Commands
+      +
+Bash Scripting
+      +
+Conditions
+      +
+Loops
+      +
+Functions
+      +
+Error Handling
+      +
+Cron
+      ↓
+DevOps Automation
+```
+
+**Aarti's Day 21 — Shell Scripting ✅**
