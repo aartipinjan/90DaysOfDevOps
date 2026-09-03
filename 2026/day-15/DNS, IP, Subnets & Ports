@@ -1,0 +1,720 @@
+# Day 15 – Networking Concepts: DNS, IP, Subnets & Ports
+
+## Objective
+
+Understand how **DNS, IP addresses, subnets, and ports** work together when systems communicate over a network.
+
+The practical focus was to:
+
+* Understand how domain names are resolved to IP addresses
+* Identify private and public IP addresses
+* Understand CIDR and subnetting
+* Understand the purpose of ports
+* Check listening services
+* Apply networking concepts to troubleshooting scenarios
+
+---
+
+# Task 1 – DNS: How Names Become IP Addresses
+
+## What happens when you type `google.com` in a browser?
+
+When I type `google.com` in a browser, the system needs to resolve the domain name to an IP address.
+
+DNS performs this name-resolution process and returns one or more IP addresses associated with the domain.
+
+The browser can then use the resolved address to communicate with the destination service.
+
+### Why DNS is important
+
+Without DNS, users would need to remember IP addresses instead of easy-to-remember domain names.
+
+```text
+google.com
+     ↓
+    DNS
+     ↓
+IP Address
+     ↓
+Application Connection
+```
+
+---
+
+# DNS Record Types
+
+| Record    | Purpose                                                              |
+| --------- | -------------------------------------------------------------------- |
+| **A**     | Maps a domain name to an IPv4 address.                               |
+| **AAAA**  | Maps a domain name to an IPv6 address.                               |
+| **CNAME** | Creates an alias that points one domain name to another.             |
+| **MX**    | Specifies mail servers responsible for receiving email for a domain. |
+| **NS**    | Specifies the authoritative name servers for a domain.               |
+
+---
+
+# Check DNS Resolution
+
+## Command
+
+```bash
+dig google.com
+```
+
+### Output
+
+```text
+; <<>> DiG 9.10.6 <<>> google.com
+;; global options: +cmd
+;; Got answer:
+;; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 16267
+;; flags: qr rd ra; QUERY: 1, ANSWER: 6, AUTHORITY: 0, ADDITIONAL: 1
+
+;; OPT PSEUDOSECTION:
+; EDNS: version: 0, flags:; udp: 4096
+;; QUESTION SECTION:
+;google.com.            IN      A
+
+;; ANSWER SECTION:
+google.com.        87    IN    A    142.250.29.100
+google.com.        87    IN    A    142.250.29.101
+google.com.        87    IN    A    142.250.29.138
+google.com.        87    IN    A    142.250.29.113
+google.com.        87    IN    A    142.250.29.139
+google.com.        87    IN    A    142.250.29.102
+
+;; Query time: 16 msec
+;; SERVER: 2401:4900:50:9::7dd#53(2401:4900:50:9::7dd)
+;; WHEN: Tue Aug 11 15:31:16 IST 2026
+;; MSG SIZE  rcvd: 135
+```
+
+## A Records Identified
+
+```text
+142.250.29.100
+142.250.29.101
+142.250.29.138
+142.250.29.113
+142.250.29.139
+142.250.29.102
+```
+
+## TTL
+
+The value:
+
+```text
+87
+```
+
+appearing between the domain name and `IN A` is the **TTL (Time To Live)** in seconds.
+
+TTL tells DNS resolvers how long the DNS response can normally remain cached.
+
+### Observation
+
+The `dig` command successfully returned DNS information for `google.com`.
+
+I identified multiple IPv4 addresses from the **A records** and observed the TTL value.
+
+---
+
+# Task 2 – IP Addressing
+
+## What is an IPv4 Address?
+
+An IPv4 address is a **32-bit address** used to identify a network interface.
+
+It is divided into four **8-bit octets** and represented in decimal notation.
+
+Example:
+
+```text
+192.168.1.10
+```
+
+The four octets are:
+
+```text
+192 . 168 . 1 . 10
+```
+
+Each octet can contain a value from:
+
+```text
+0 – 255
+```
+
+---
+
+# Public vs Private IP Addresses
+
+## Private IP
+
+A private IP address is used inside a private network and is not directly routable across the public internet.
+
+Example:
+
+```text
+192.168.1.10
+```
+
+## Public IP
+
+A public IP address is globally routable and can be used for communication across the internet, subject to network and security controls.
+
+Example:
+
+```text
+8.8.8.8
+```
+
+---
+
+# Private IPv4 Ranges
+
+| Private Range                   | CIDR             |
+| ------------------------------- | ---------------- |
+| `10.0.0.0 – 10.255.255.255`     | `10.0.0.0/8`     |
+| `172.16.0.0 – 172.31.255.255`   | `172.16.0.0/12`  |
+| `192.168.0.0 – 192.168.255.255` | `192.168.0.0/16` |
+
+### Important
+
+These three ranges are defined for private IPv4 networking.
+
+---
+
+# Check IP Addresses on the System
+
+## Command
+
+```bash
+ip addr show
+```
+
+### Output
+
+```text
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host noprefixroute
+       valid_lft forever preferred_lft forever
+2: ens5: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 9001 qdisc mq state UP group default qlen 1000
+    link/ether 06:1d:f6:58:96:31 brd ff:ff:ff:ff:ff:ff
+    altname enp0s5
+    altname enx061df6589631
+    inet 172.31.42.70/20 metric 100 brd 172.31.47.255 scope global dynamic ens5
+       valid_lft 3090sec preferred_lft 3090sec
+    inet6 fe80::41d:f6ff:fe58:9631/64 scope link proto kernel_ll
+       valid_lft forever preferred_lft forever
+```
+
+## Private IP Identified
+
+```text
+172.31.42.70/20
+```
+
+### Observation
+
+`ip addr show` displayed the IP addresses assigned to the system's network interfaces.
+
+The address:
+
+```text
+172.31.42.70
+```
+
+falls within the private `172.16.0.0/12` range.
+
+---
+
+# Task 3 – CIDR & Subnetting
+
+## What Does `/24` Mean?
+
+Consider:
+
+```text
+192.168.1.0/24
+```
+
+The `/24` means that **24 of the 32 IPv4 bits** represent the network portion.
+
+The remaining:
+
+```text
+32 - 24 = 8 bits
+```
+
+are available for host addressing.
+
+### Subnet Mask
+
+```text
+255.255.255.0
+```
+
+---
+
+# Usable Hosts
+
+## `/24`
+
+```text
+Total IPs    = 256
+Usable Hosts = 254
+```
+
+## `/16`
+
+```text
+Total IPs    = 65,536
+Usable Hosts = 65,534
+```
+
+## `/28`
+
+```text
+Total IPs    = 16
+Usable Hosts = 14
+```
+
+For traditional IPv4 subnets, the network address and broadcast address are generally not assigned to normal hosts.
+
+---
+
+# Why Do We Subnet?
+
+Subnetting divides a larger network into smaller networks.
+
+It helps with:
+
+* IP address organization
+* Network segmentation
+* Traffic management
+* Security boundaries
+* Easier network administration
+
+### Example
+
+```text
+Large Network
+     |
+     +------- Subnet A
+     |
+     +------- Subnet B
+     |
+     +------- Subnet C
+```
+
+---
+
+# CIDR Quick Reference
+
+| CIDR  | Subnet Mask       | Total IPs | Usable Hosts |
+| ----- | ----------------- | --------: | -----------: |
+| `/24` | `255.255.255.0`   |       256 |          254 |
+| `/16` | `255.255.0.0`     |    65,536 |       65,534 |
+| `/28` | `255.255.255.240` |        16 |           14 |
+
+---
+
+# Task 4 – Ports: The Doors to Services
+
+## What is a Port?
+
+A port is a logical number used to identify a network service or application running on a host.
+
+A useful way to remember it is:
+
+```text
+IP Address → Identifies the host/interface
+Port       → Identifies the service endpoint
+```
+
+Example:
+
+```text
+192.168.1.10:22
+```
+
+Here:
+
+```text
+IP Address = 192.168.1.10
+Port       = 22
+```
+
+Port `22` is normally used by SSH.
+
+---
+
+# Common Ports
+
+|    Port | Service |
+| ------: | ------- |
+|    `22` | SSH     |
+|    `80` | HTTP    |
+|   `443` | HTTPS   |
+|    `53` | DNS     |
+|  `3306` | MySQL   |
+|  `6379` | Redis   |
+| `27017` | MongoDB |
+
+### Important
+
+These are common/default ports. Applications can sometimes be configured to use different ports.
+
+---
+
+# Check Listening Ports
+
+## Command
+
+```bash
+ss -tulpn
+```
+
+### Output
+
+```text
+Netid       State        Recv-Q       Send-Q                 Local Address:Port               Peer Address:Port       Process
+udp         UNCONN       0            0                          127.0.0.1:323                     0.0.0.0:*
+udp         UNCONN       0            0                         127.0.0.54:53                      0.0.0.0:*
+udp         UNCONN       0            0                      127.0.0.53%lo:53                      0.0.0.0:*
+udp         UNCONN       0            0                  172.31.42.70%ens5:68                      0.0.0.0:*
+udp         UNCONN       0            0                              [::1]:323                        [::]:*
+tcp         LISTEN       0            4096                      127.0.0.54:53                      0.0.0.0:*
+tcp         LISTEN       0            4096                   127.0.0.53%lo:53                      0.0.0.0:*
+tcp         LISTEN       0            4096                         0.0.0.0:22                      0.0.0.0:*
+tcp         LISTEN       0            4096                            [::]:22                         [::]:*
+```
+
+### Observation
+
+The `ss -tulpn` command displayed TCP and UDP sockets that are listening on the system.
+
+---
+
+## Listening Port 1
+
+```text
+Port: 22
+Service: SSH
+```
+
+SSH was listening on TCP port `22`.
+
+---
+
+## Listening Port 2
+
+```text
+Port: 53
+Service: DNS
+```
+
+Port `53` was being used for DNS-related service activity.
+
+### Observation
+
+The command allowed me to identify which ports were listening and understand which services or network functions were associated with them.
+
+---
+
+# Task 5 – Putting It Together
+
+# Scenario 1 – Application Request
+
+### Command
+
+```bash
+curl http://myapp.com:8080
+```
+
+### Answer
+
+Several networking concepts are involved:
+
+```text
+myapp.com
+    ↓
+DNS Resolution
+    ↓
+IP Address
+    ↓
+TCP Connection
+    ↓
+Port 8080
+    ↓
+HTTP
+    ↓
+Application
+```
+
+The domain name may first be resolved through DNS.
+
+The connection then uses IP networking and TCP, while port `8080` identifies the target application service.
+
+HTTP operates at the application layer.
+
+---
+
+# Scenario 2 – Application Cannot Reach MySQL
+
+## Problem
+
+The application cannot reach:
+
+```text
+10.0.1.50:3306
+```
+
+## Step 1 – Check Server Reachability
+
+```bash
+ping 10.0.1.50
+```
+
+### Purpose
+
+Check basic IP-level reachability.
+
+---
+
+## Step 2 – Check TCP Port
+
+```bash
+nc -zv 10.0.1.50 3306
+```
+
+### Purpose
+
+Check whether TCP port `3306` is reachable.
+
+---
+
+## Step 3 – Continue Investigation
+
+If the port is not reachable, I would check:
+
+```text
+MySQL service
+     ↓
+Listening port
+     ↓
+Firewall / Security Group
+     ↓
+Network route
+     ↓
+Application configuration
+```
+
+Useful checks include:
+
+```bash
+ss -tulpn
+```
+
+```bash
+systemctl status mysql
+```
+
+and the appropriate firewall/security-group checks.
+
+---
+
+# Networking Troubleshooting Flow
+
+```text
+Application Cannot Connect
+          ↓
+     Check DNS
+          ↓
+   Check IP Reachability
+          ↓
+     Check Route
+          ↓
+     Check Port
+          ↓
+ Check Firewall / Security Rules
+          ↓
+     Check Service
+          ↓
+ Check Application Configuration
+```
+
+---
+
+# What I Learned
+
+### 1. DNS
+
+DNS allows users and applications to resolve domain names into IP addresses.
+
+### 2. IP Addressing
+
+IPv4 uses 32-bit addresses represented as four decimal octets.
+
+### 3. Private IP
+
+Private IP addresses are used inside private networks and include:
+
+```text
+10.0.0.0/8
+172.16.0.0/12
+192.168.0.0/16
+```
+
+### 4. CIDR
+
+CIDR notation describes how many bits belong to the network prefix.
+
+Example:
+
+```text
+192.168.1.0/24
+```
+
+### 5. Ports
+
+Ports identify service endpoints on a host.
+
+Example:
+
+```text
+192.168.1.10:22
+```
+
+means:
+
+```text
+Host → 192.168.1.10
+Service → TCP 22 / SSH
+```
+
+---
+
+# Commands Practiced
+
+```bash
+dig google.com
+
+ip addr show
+
+ss -tulpn
+
+ping 10.0.1.50
+
+nc -zv 10.0.1.50 3306
+```
+
+---
+
+# Key Networking Flow
+
+```text
+Domain Name
+     ↓
+    DNS
+     ↓
+ IP Address
+     ↓
+ Network / Route
+     ↓
+ TCP / UDP
+     ↓
+    Port
+     ↓
+ Application
+```
+
+### Example
+
+```text
+http://myapp.com:8080
+          ↓
+         DNS
+          ↓
+     IP Address
+          ↓
+         TCP
+          ↓
+      Port 8080
+          ↓
+         HTTP
+          ↓
+     Application
+```
+
+---
+
+# Interview Quick Revision
+
+### What is DNS?
+
+> DNS is a naming system that allows domain names to be resolved to IP addresses.
+
+### What is an IPv4 address?
+
+> IPv4 is a 32-bit addressing system represented as four 8-bit decimal octets.
+
+### What is CIDR?
+
+> CIDR represents an IP network using a prefix length such as `/24` or `/16`.
+
+### What is a port?
+
+> A port is a logical service endpoint used to distinguish network services running on a host.
+
+### What would you check if an application cannot connect to MySQL?
+
+```text
+DNS
+ ↓
+Reachability
+ ↓
+Route
+ ↓
+Port 3306
+ ↓
+Firewall / Security Group
+ ↓
+MySQL service
+ ↓
+Application configuration
+```
+
+---
+
+# Conclusion
+
+Day 15 helped me understand how **DNS, IP addresses, CIDR/subnets, and ports** work together when applications communicate across networks.
+
+These concepts are fundamental for troubleshooting connectivity problems in:
+
+```text
+Linux
+  ↓
+Cloud
+  ↓
+Docker
+  ↓
+Kubernetes
+  ↓
+OpenShift
+  ↓
+DevOps Infrastructure
+```
+
+### Final Learning
+
+> **I learned to view a network problem step by step: resolve the name, identify the IP, understand the route, check the port, verify the service, and finally investigate the application.**
+
+DNS → IP → Route → Port → Service → Application
+```
