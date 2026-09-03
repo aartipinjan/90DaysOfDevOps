@@ -1,0 +1,1081 @@
+# Day 27 – GitHub Profile & Git Revision
+
+> **Objective:** Consolidate and revise the Git and GitHub commands practiced during **Days 22–26** instead of making unnecessary GitHub profile changes.
+
+This is my personal Git reference covering:
+
+* Repositories
+* Commits
+* Branching
+* Remote repositories
+* Merge & conflicts
+* Rebase
+* Squash merge
+* Stash
+* Cherry-pick
+* Reset
+* Revert
+* Reflog
+* GitHub CLI
+
+---
+
+# 1. Git Setup & Configuration
+
+### Check Git Version
+
+```bash
+git --version
+```
+
+### Configure Username
+
+```bash
+git config --global user.name "Aarti"
+```
+
+### Configure Email
+
+```bash
+git config --global user.email "your-email@example.com"
+```
+
+### View Configuration
+
+```bash
+git config --list
+```
+
+---
+
+# 2. Repository Setup
+
+```bash
+mkdir devops-git-practice
+cd devops-git-practice
+
+git init
+git status
+
+ls -a
+ls .git
+```
+
+### Purpose
+
+| Command      | Purpose                              |
+| ------------ | ------------------------------------ |
+| `mkdir`      | Creates a project directory          |
+| `cd`         | Enters the directory                 |
+| `git init`   | Initializes a Git repository         |
+| `git status` | Shows repository state               |
+| `ls -a`      | Shows hidden files                   |
+| `ls .git`    | Shows Git's internal repository data |
+
+---
+
+# 3. Basic Git Workflow
+
+## Create, Edit & Read Files
+
+```bash
+touch file.txt
+echo "hello" > file.txt
+echo "hello" >> file.txt
+cat file.txt
+vim file.txt
+```
+
+## Stage & Commit
+
+```bash
+git add file.txt
+git add .
+
+git commit -m "first commit"
+```
+
+## Git Workflow
+
+```text
+Working Directory
+       |
+       | git add
+       v
+Staging Area
+       |
+       | git commit
+       v
+Local Repository
+       |
+       | git push
+       v
+GitHub
+```
+
+### Key Concept
+
+```text
+Working Directory → Staging Area → Local Repository → Remote Repository
+```
+
+---
+
+# 4. Viewing Changes & History
+
+```bash
+git status
+git diff
+git log
+git log --oneline
+git log --oneline --graph --all
+```
+
+| Command                           | Purpose                                    |
+| --------------------------------- | ------------------------------------------ |
+| `git status`                      | Shows modified, staged and untracked files |
+| `git diff`                        | Shows unstaged changes                     |
+| `git log`                         | Shows commit history                       |
+| `git log --oneline`               | Shows compact commit history               |
+| `git log --oneline --graph --all` | Visualizes branches and commits            |
+
+---
+
+# 5. Branching
+
+```bash
+git branch
+git branch feature-1
+
+git checkout -b feature-login
+git checkout feature-login
+
+git switch feature-login
+
+git branch -d feature-name
+```
+
+### Branches I Practiced
+
+```text
+feature-1
+feature-2
+feature-login
+feature-signup
+feature-dashboard
+feature-profile
+feature-settings
+feature-hotfix
+```
+
+### Key Concept
+
+> A branch allows work to happen separately from the main branch.
+
+---
+
+# 6. Remote Repositories
+
+```bash
+git remote -v
+```
+
+Add a remote:
+
+```bash
+git remote add origin git@github.com:username/repository.git
+```
+
+### Important Remote Names
+
+| Remote     | Common Meaning                               |
+| ---------- | -------------------------------------------- |
+| `origin`   | Main remote repository                       |
+| `upstream` | Original repository when working with a fork |
+
+---
+
+# 7. Push, Pull & Fetch
+
+```bash
+git push origin master
+git push origin main
+git push origin feature-1
+
+git push -u origin feature-1
+
+git pull origin feature-1
+
+git fetch origin master
+git merge origin/master
+```
+
+## Fetch vs Pull
+
+### `git fetch`
+
+Downloads remote changes **without automatically merging them**.
+
+```bash
+git fetch origin
+```
+
+### `git pull`
+
+Downloads remote changes and integrates them into the current branch.
+
+```bash
+git pull
+```
+
+### Easy Way to Remember
+
+```text
+git fetch → Download changes
+git pull  → Download + integrate changes
+```
+
+---
+
+# 8. Git Merge
+
+```bash
+git merge feature-login
+```
+
+## Fast-Forward Merge
+
+A fast-forward merge happens when the target branch has not moved forward since the feature branch was created.
+
+```text
+A---B---C
+        ^
+     master
+     feature
+```
+
+Git can simply move the branch pointer forward.
+
+## Merge Commit
+
+When both branches contain separate commits, Git may create a merge commit.
+
+```text
+      C---D
+     /     \
+A---B       M
+     \     /
+      E---F
+```
+
+---
+
+# 9. Merge Conflicts
+
+During practice, I intentionally created a conflict by changing the same file on different branches.
+
+Example:
+
+```text
+CONFLICT (content): Merge conflict in hello.txt
+Automatic merge failed; fix conflicts and then commit the result.
+```
+
+## Resolve Conflict
+
+```bash
+git status
+vim hello.txt
+
+git add .
+git commit -m "resolved conflict"
+```
+
+### Conflict Markers
+
+```text
+<<<<<<< HEAD
+current branch
+=======
+other branch
+>>>>>>> feature-login
+```
+
+### Key Concept
+
+> A merge conflict occurs when Git cannot automatically determine which changes should be kept.
+
+---
+
+# 10. Git Rebase
+
+I practiced:
+
+```bash
+git rebase main
+```
+
+This failed because my repository uses `master`:
+
+```text
+fatal: invalid upstream 'main'
+```
+
+The correct command was:
+
+```bash
+git rebase master
+```
+
+Then I checked the history:
+
+```bash
+git log --oneline --graph --all
+```
+
+## What Rebase Does
+
+### Before
+
+```text
+A---B---C       master
+     \
+      D---E     feature
+```
+
+### After
+
+```text
+A---B---C---D'---E'
+```
+
+Rebase reapplies feature commits on top of the latest `master`.
+
+The rebased commits receive **new commit IDs**.
+
+### ⚠️ Important
+
+Avoid rebasing commits that have already been pushed and shared because rebase rewrites history.
+
+---
+
+# 11. Squash Merge
+
+```bash
+git merge feature-profile --squash
+git commit -m "adding new file"
+```
+
+I created multiple commits on `feature-profile`:
+
+```text
+fe4e2b0 first commit
+ad7a324 second commit
+43daf8b third commit
+```
+
+Then:
+
+```bash
+git merge feature-profile --squash
+```
+
+The changes were staged, and I created one commit on `master`.
+
+### Why Use Squash Merge?
+
+Squash merge is useful when a feature branch contains many small commits and I want a cleaner main branch history.
+
+```text
+Feature Branch
+
+A---B---C
+    |   |
+    |   └── small commit
+    └────── small commit
+
+        ↓ squash
+
+Master
+
+A---B---S
+        ^
+     one clean commit
+```
+
+---
+
+# 12. Git Stash
+
+```bash
+git stash
+git stash list
+git stash pop stash@{0}
+git stash apply stash@{0}
+git stash push -m "description"
+```
+
+I tried switching branches with uncommitted changes and Git stopped me:
+
+```text
+error: Your local changes to the following files would be overwritten by checkout
+```
+
+I then used:
+
+```bash
+git stash
+```
+
+to temporarily save my work.
+
+## Pop vs Apply
+
+| Command           | Action                                       |
+| ----------------- | -------------------------------------------- |
+| `git stash pop`   | Applies stash and removes it if successful   |
+| `git stash apply` | Applies stash but keeps it in the stash list |
+
+### Practice Mistake
+
+Wrong:
+
+```bash
+git pop a705ad5
+```
+
+Correct:
+
+```bash
+git stash pop stash@{0}
+```
+
+> A commit hash is not the same as a stash reference.
+
+---
+
+# 13. Cherry-Pick
+
+I created `feature-hotfix` with:
+
+```text
+667da43  1
+0158ac4  2
+ee6eabe  3
+```
+
+Then switched to `master` and attempted:
+
+```bash
+git cherry-pick 0158ac4
+```
+
+A conflict occurred:
+
+```text
+CONFLICT (modify/delete): cherry.txt deleted in HEAD and modified in 0158ac4
+```
+
+## Resolve Cherry-Pick Conflict
+
+```bash
+git add cherry.txt
+git cherry-pick --continue
+```
+
+### Useful Commands
+
+```bash
+git cherry-pick <commit>
+
+git cherry-pick --continue
+git cherry-pick --skip
+git cherry-pick --abort
+```
+
+### Key Concept
+
+> Cherry-pick is useful when I need one specific commit from another branch without merging the entire branch.
+
+---
+
+# 14. Git Reset
+
+I practiced all three reset modes.
+
+## `--soft`
+
+```bash
+git reset --soft d26c685
+```
+
+* Commit history moves back
+* Staged changes remain
+* Working files remain
+
+Then:
+
+```bash
+git commit -m "after soft commit"
+```
+
+---
+
+## `--mixed`
+
+```bash
+git reset --mixed d26c685
+```
+
+* Commit history moves back
+* Changes become unstaged
+* Working files remain
+
+Then:
+
+```bash
+git add .
+git commit -m "after mixed commit"
+```
+
+---
+
+## `--hard`
+
+```bash
+git reset --hard d26c685
+```
+
+* Commit history moves back
+* Staging area resets
+* Working files reset
+
+### Reset Comparison
+
+| Command   | Commit | Staging   | Working Directory |
+| --------- | ------ | --------- | ----------------- |
+| `--soft`  | Reset  | Preserved | Preserved         |
+| `--mixed` | Reset  | Reset     | Preserved         |
+| `--hard`  | Reset  | Reset     | Reset             |
+
+> ⚠️ `git reset --hard` is destructive because uncommitted changes can be lost.
+
+For shared/pushed commits, `git revert` is generally safer.
+
+---
+
+# 15. Git Revert
+
+```bash
+git revert 6eac539
+git log --oneline
+```
+
+`git revert` creates a **new commit** that reverses the changes introduced by another commit.
+
+## Reset vs Revert
+
+|                        | `git reset`                               | `git revert`          |
+| ---------------------- | ----------------------------------------- | --------------------- |
+| Purpose                | Move branch pointer                       | Reverse changes       |
+| Creates new commit     | No                                        | Yes                   |
+| Original commit        | Can disappear from current branch history | Remains               |
+| Safe for shared branch | Usually no                                | Yes                   |
+| Common use             | Local/private history                     | Shared/pushed history |
+
+### Easy Way to Remember
+
+```text
+RESET  → Rewrite / move history
+REVERT → Create a new commit to undo changes
+```
+
+---
+
+# 16. Git Reflog
+
+```bash
+git reflog
+```
+
+`git reflog` shows movements of `HEAD` and branch references.
+
+It can be useful for recovering commits after operations such as:
+
+```bash
+git reset --hard
+```
+
+### Key Concept
+
+> **Reflog is an important Git safety net.**
+
+---
+
+# 17. Git Clone
+
+```bash
+git clone <repository-url>
+```
+
+Creates a local copy of a remote repository.
+
+With GitHub CLI:
+
+```bash
+gh repo clone <owner>/<repo>
+```
+
+---
+
+# 18. GitHub CLI
+
+## Authentication
+
+```bash
+gh --version
+gh auth login
+gh auth status
+```
+
+## Repository Commands
+
+```bash
+gh repo create
+gh repo clone <owner>/<repo>
+gh repo view
+gh repo list
+gh repo view --web
+gh repo delete <owner>/<repo>
+```
+
+## Issues
+
+```bash
+gh issue create
+gh issue list
+gh issue view <issue-number>
+gh issue close <issue-number>
+```
+
+## Pull Requests
+
+```bash
+gh pr create
+gh pr create --fill
+
+gh pr list
+gh pr view <pr-number>
+gh pr checks <pr-number>
+
+gh pr merge <pr-number>
+gh pr merge <pr-number> --merge
+gh pr merge <pr-number> --squash
+gh pr merge <pr-number> --rebase
+```
+
+## GitHub Actions
+
+```bash
+gh run list
+gh run view <run-id>
+gh workflow list
+```
+
+## Other Useful Commands
+
+```bash
+gh api <endpoint>
+
+gh gist create <file>
+
+gh release list
+gh release create <tag>
+
+gh alias list
+gh alias set <alias> '<command>'
+
+gh search repos <search-term>
+```
+
+---
+
+# 19. Common Mistakes I Made
+
+## Wrong Log Command
+
+```bash
+git logs
+```
+
+Correct:
+
+```bash
+git log
+```
+
+## Wrong Option
+
+```bash
+git log --online
+```
+
+Correct:
+
+```bash
+git log --oneline
+```
+
+## Typo
+
+```bash
+git addd .
+```
+
+Correct:
+
+```bash
+git add .
+```
+
+## Cherry-Pick Typo
+
+```bash
+git cherr-pick 0158ac4
+```
+
+Correct:
+
+```bash
+git cherry-pick 0158ac4
+```
+
+## Wrong Stash Command
+
+```bash
+git pop a705ad5
+```
+
+Correct:
+
+```bash
+git stash pop stash@{0}
+```
+
+## Wrong Rebase Target
+
+```bash
+git rebase main
+```
+
+Correct for my repository:
+
+```bash
+git rebase master
+```
+
+### Lesson Learned
+
+> These mistakes helped me understand Git syntax instead of simply memorizing commands.
+
+---
+
+# 20. Most Important Commands for Daily Practice
+
+## Daily Workflow
+
+```bash
+git status
+git add .
+git commit -m "message"
+git log --oneline
+git diff
+```
+
+## Branching
+
+```bash
+git branch
+git checkout -b feature-name
+git checkout feature-name
+git switch feature-name
+```
+
+## Remote
+
+```bash
+git remote -v
+git push
+git pull
+git fetch
+```
+
+## Merge & Rebase
+
+```bash
+git merge feature-name
+git merge feature-name --squash
+git rebase master
+```
+
+## Stash
+
+```bash
+git stash
+git stash list
+git stash pop
+git stash apply
+```
+
+## Cherry-Pick
+
+```bash
+git cherry-pick <commit>
+git cherry-pick --continue
+git cherry-pick --abort
+```
+
+## Undo
+
+```bash
+git reset --soft <commit>
+git reset --mixed <commit>
+git reset --hard <commit>
+
+git revert <commit>
+
+git reflog
+```
+
+## GitHub CLI
+
+```bash
+gh auth status
+gh repo view
+gh repo list
+
+gh issue create
+gh issue list
+
+gh pr create
+gh pr list
+gh pr checks
+gh pr merge
+
+gh run list
+gh workflow list
+```
+
+---
+
+# 21. Git Workflow I Want to Remember
+
+## Normal Development
+
+```text
+Create / Edit
+      ↓
+git status
+      ↓
+git diff
+      ↓
+git add .
+      ↓
+git commit
+      ↓
+git log --oneline
+      ↓
+git push
+```
+
+## Feature Development
+
+```text
+master
+  |
+  └── feature branch
+          |
+          ├── commit
+          ├── commit
+          └── commit
+                |
+                ↓
+              push
+                |
+                ↓
+          Pull Request
+                |
+                ↓
+              Review
+                |
+                ↓
+              Merge
+```
+
+## When Something Goes Wrong
+
+```text
+Uncommitted work
+      ↓
+git stash
+
+Local commit mistake
+      ↓
+git reset
+
+Shared commit mistake
+      ↓
+git revert
+
+Need one specific commit
+      ↓
+git cherry-pick
+
+Lost commit/reference
+      ↓
+git reflog
+
+Merge conflict
+      ↓
+git status
+      ↓
+Resolve file
+      ↓
+git add .
+      ↓
+git commit
+```
+
+---
+
+# 22. Git Decision Cheat Sheet
+
+| Situation                    | Command                        |
+| ---------------------------- | ------------------------------ |
+| Check repository state       | `git status`                   |
+| See unstaged changes         | `git diff`                     |
+| Save work temporarily        | `git stash`                    |
+| Create a branch              | `git checkout -b feature-name` |
+| Merge a branch               | `git merge feature-name`       |
+| Keep history linear          | `git rebase master`            |
+| Combine feature commits      | `git merge --squash`           |
+| Take one specific commit     | `git cherry-pick <commit>`     |
+| Undo local history           | `git reset`                    |
+| Undo shared/pushed changes   | `git revert`                   |
+| Find previous HEAD positions | `git reflog`                   |
+| Download remote changes      | `git fetch`                    |
+| Download + integrate changes | `git pull`                     |
+| Send commits to remote       | `git push`                     |
+| Create GitHub PR             | `gh pr create`                 |
+| Check CI status              | `gh pr checks`                 |
+| View workflow runs           | `gh run list`                  |
+
+---
+
+# 23. Final Revision
+
+I do not need to memorize every Git command.
+
+The important thing is to understand the **repository state** and know what action is required.
+
+The commands I should be most comfortable with are:
+
+```bash
+git status
+git add .
+git commit -m "message"
+git log --oneline
+git diff
+
+git branch
+git checkout -b feature-name
+git checkout branch-name
+
+git remote -v
+git push
+git pull
+git fetch
+
+git merge
+git rebase
+
+git stash
+git stash list
+git stash pop
+
+git cherry-pick <commit>
+
+git reset --soft <commit>
+git reset --mixed <commit>
+git reset --hard <commit>
+
+git revert <commit>
+git reflog
+```
+
+For GitHub CLI:
+
+```bash
+gh auth status
+gh repo view
+gh repo list
+
+gh issue create
+gh issue list
+
+gh pr create
+gh pr list
+gh pr checks
+gh pr merge
+
+gh run list
+gh workflow list
+```
+
+---
+
+# 24. Day 27 Reflection
+
+My GitHub profile is already improved, so I used **Day 27 for Git and GitHub command revision** instead of making unnecessary profile changes.
+
+During Days 22–26 I practiced:
+
+* [x] Git repository creation
+* [x] Git configuration
+* [x] Staging and commits
+* [x] Commit history
+* [x] Branching
+* [x] Remote repositories
+* [x] Push, pull and fetch
+* [x] Merge
+* [x] Merge conflicts
+* [x] Rebase
+* [x] Squash merge
+* [x] Stash
+* [x] Cherry-pick
+* [x] Reset
+* [x] Revert
+* [x] Reflog
+* [x] GitHub CLI
+* [x] GitHub repositories
+* [x] GitHub Issues
+* [x] Pull Requests
+* [x] GitHub Actions
+
+## 🎯 Main Takeaway
+
+> **Git is not about memorizing hundreds of commands.**
+
+It is about understanding the **current state of the repository** and choosing the correct operation.
+
+> **Understand the workflow first. Commands become easier through practice.**
+
+---
+
+# 🏆 Day 27 Completed
+
+**Day 27 – Git & GitHub Revision**
+
+`#90DaysOfDevOps`
+`#DevOpsKaJosh`
+
