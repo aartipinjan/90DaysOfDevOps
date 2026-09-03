@@ -1,0 +1,609 @@
+# 🐚 Day 19 – Shell Scripting Cheat Sheet
+
+## 1. `find` Command ⭐⭐⭐
+
+`find` is heavily used in Linux administration and automation.
+
+### Find `.log` files
+
+```bash
+find /var/log -name "*.log" -type f
+```
+
+### Find files older than 7 days
+
+```bash
+find /var/log -name "*.log" -type f -mtime +7
+```
+
+### Find `.gz` files older than 30 days
+
+```bash
+find /var/log -name "*.gz" -type f -mtime +30
+```
+
+### Delete old files
+
+```bash
+find /backup -name "*.tar.gz" -type f -mtime +14 -delete
+```
+
+⚠️ Be careful with `-delete` in production. Always test the `find` command without `-delete` first.
+
+---
+
+# 2. `gzip` ⭐⭐
+
+Compress a file:
+
+```bash
+gzip application.log
+```
+
+This normally produces:
+
+```text
+application.log.gz
+```
+
+Decompress:
+
+```bash
+gunzip application.log.gz
+```
+
+Check compressed file:
+
+```bash
+ls -lh application.log.gz
+```
+
+---
+
+# 3. `tar` Backup ⭐⭐⭐
+
+Create compressed archive:
+
+```bash
+tar -czf backup.tar.gz /source/dir
+```
+
+Options:
+
+```text
+-c → create
+-z → gzip compression
+-f → archive filename
+```
+
+Extract:
+
+```bash
+tar -xzf backup.tar.gz
+```
+
+List contents:
+
+```bash
+tar -tzf backup.tar.gz
+```
+
+### Very useful interview point
+
+```text
+tar
+ ↓
+Archive multiple files/directories
+
+gzip
+ ↓
+Compress data
+
+tar -czf
+ ↓
+Create a gzip-compressed tar archive
+```
+
+---
+
+# 4. Backup Verification ⭐⭐⭐
+
+Don't assume that a successful command means your backup is usable.
+
+Basic verification:
+
+```bash
+if [ -f "$BACKUP_FILE" ]; then
+    echo "Backup file exists"
+else
+    echo "Backup failed"
+    exit 1
+fi
+```
+
+Better verification:
+
+```bash
+tar -tzf "$BACKUP_FILE" >/dev/null
+```
+
+If the archive can be read successfully, it is less likely to be corrupted.
+
+Example:
+
+```bash
+if tar -tzf "$BACKUP_FILE" >/dev/null 2>&1; then
+    echo "Backup archive is valid"
+else
+    echo "Backup archive is corrupted"
+    exit 1
+fi
+```
+
+---
+
+# 5. Script Arguments ⭐⭐⭐
+
+Day 19 uses:
+
+```bash
+$1
+$2
+$?
+```
+
+| Variable | Meaning                      |
+| -------- | ---------------------------- |
+| `$0`     | Script name                  |
+| `$1`     | First argument               |
+| `$2`     | Second argument              |
+| `$#`     | Number of arguments          |
+| `$@`     | All arguments                |
+| `$?`     | Previous command exit status |
+
+Example:
+
+```bash
+./backup.sh /data /backup
+```
+
+Then:
+
+```text
+$1 → /data
+$2 → /backup
+```
+
+---
+
+# 6. Validate Arguments
+
+Your scripts should check arguments before using them.
+
+### Log rotation
+
+```bash
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <log-directory>"
+    exit 1
+fi
+```
+
+### Backup
+
+```bash
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <source-directory> <backup-directory>"
+    exit 1
+fi
+```
+
+This prevents confusing errors.
+
+---
+
+# 7. Cron ⭐⭐⭐
+
+Cron is used to schedule recurring tasks.
+
+Syntax:
+
+```text
+* * * * * command
+│ │ │ │ │
+│ │ │ │ └── Day of week
+│ │ │ └──── Month
+│ │ └────── Day of month
+│ └──────── Hour
+└────────── Minute
+```
+
+### Every minute
+
+```cron
+* * * * * command
+```
+
+### Every 5 minutes
+
+```cron
+*/5 * * * * command
+```
+
+### Every day at 2 AM
+
+```cron
+0 2 * * * command
+```
+
+### Every Sunday at 3 AM
+
+```cron
+0 3 * * 0 command
+```
+
+### Every day at 1 AM
+
+```cron
+0 1 * * * command
+```
+
+---
+
+# 8. Crontab Commands
+
+List cron jobs:
+
+```bash
+crontab -l
+```
+
+Edit cron jobs:
+
+```bash
+crontab -e
+```
+
+Remove current user's crontab:
+
+```bash
+crontab -r
+```
+
+⚠️ Be careful with `crontab -r`; it removes the user's crontab.
+
+---
+
+# 9. Cron + Logging ⭐⭐⭐
+
+A scheduled script should normally have logging.
+
+Example:
+
+```cron
+0 2 * * * /opt/scripts/backup.sh /data /backup >> /var/log/backup.log 2>&1
+```
+
+Meaning:
+
+```text
+>> backup.log
+      ↓
+Append standard output
+
+2>&1
+      ↓
+Send standard error to the same log
+```
+
+This makes troubleshooting much easier.
+
+---
+
+# 10. `2>&1` ⭐⭐⭐
+
+```bash
+command >> logfile 2>&1
+```
+
+Means:
+
+```text
+stdout → logfile
+stderr → same logfile
+```
+
+Example:
+
+```bash
+./backup.sh /data /backup >> /var/log/backup.log 2>&1
+```
+
+---
+
+# 11. Log Rotation Flow
+
+Your Day 19 process is:
+
+```text
+Find .log files
+       ↓
+Older than 7 days?
+       ↓
+gzip
+       ↓
+.log.gz
+       ↓
+Find .gz files
+       ↓
+Older than 30 days?
+       ↓
+Delete
+```
+
+---
+
+# 12. Backup Flow
+
+```text
+Validate Source
+       ↓
+Create Backup Directory
+       ↓
+Generate Date
+       ↓
+tar + gzip
+       ↓
+Verify Backup
+       ↓
+Check Archive Size
+       ↓
+Delete Old Backups
+       ↓
+Log Result
+```
+
+---
+
+# 13. Maintenance Automation
+
+Your combined workflow is:
+
+```text
+                 maintenance.sh
+                       │
+             ┌─────────┴─────────┐
+             ↓                   ↓
+       Log Rotation           Backup
+             ↓                   ↓
+         Compress             tar.gz
+             ↓                   ↓
+         Delete old          Verify
+             └─────────┬─────────┘
+                       ↓
+                     Log
+                       ↓
+                     Cron
+```
+
+This is a realistic Linux administration automation pattern.
+
+---
+
+# ⚠️ Important Improvements to Your Scripts
+
+## 1. Add argument validation to `log_rotate.sh`
+
+Currently:
+
+```bash
+LOG_DIR=$1
+```
+
+If you run:
+
+```bash
+./log_rotate.sh
+```
+
+`$1` is missing.
+
+Better:
+
+```bash
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0 <log-directory>"
+    exit 1
+fi
+
+LOG_DIR="$1"
+```
+
+---
+
+## 2. Add argument validation to `backup.sh`
+
+```bash
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 <source-directory> <backup-directory>"
+    exit 1
+fi
+
+SOURCE_DIR="$1"
+BACKUP_DIR="$2"
+```
+
+---
+
+## 3. Use strict mode in production-style scripts
+
+Since you learned this on Day 18:
+
+```bash
+set -euo pipefail
+```
+
+However, be careful when using `set -e` with commands whose non-zero status is expected or handled.
+
+For example:
+
+```bash
+if command; then
+    ...
+else
+    ...
+fi
+```
+
+is safer when you explicitly expect possible failure.
+
+---
+
+## 4. Important issue with `maintenance.sh`
+
+You currently have:
+
+```bash
+./log_rotate.sh
+./backup.sh
+```
+
+This can cause problems when executed through cron because cron does not necessarily run the script from the directory where your scripts are stored.
+
+A better approach is to use absolute paths.
+
+For example:
+
+```bash
+SCRIPT_DIR="/opt/devops/scripts"
+
+"$SCRIPT_DIR/log_rotate.sh" "$LOG_DIR"
+"$SCRIPT_DIR/backup.sh" "$SOURCE_DIR" "$BACKUP_DIR"
+```
+
+This is an important **real-world DevOps practice**.
+
+---
+
+# ⭐ Production-Style Maintenance Pattern
+
+A cleaner version would look like:
+
+```bash
+#!/bin/bash
+
+set -euo pipefail
+
+SCRIPT_DIR="/opt/devops/scripts"
+
+LOG_DIR="/var/log/myapp"
+SOURCE_DIR="/data/myapp"
+BACKUP_DIR="/backup"
+LOG_FILE="/var/log/maintenance.log"
+
+echo "$(date): Maintenance started" >> "$LOG_FILE"
+
+echo "$(date): Starting log rotation" >> "$LOG_FILE"
+"$SCRIPT_DIR/log_rotate.sh" "$LOG_DIR" >> "$LOG_FILE" 2>&1
+
+echo "$(date): Starting backup" >> "$LOG_FILE"
+"$SCRIPT_DIR/backup.sh" "$SOURCE_DIR" "$BACKUP_DIR" >> "$LOG_FILE" 2>&1
+
+echo "$(date): Maintenance completed" >> "$LOG_FILE"
+```
+
+Then cron:
+
+```cron
+0 1 * * * /opt/devops/scripts/maintenance.sh
+```
+
+---
+
+# 🎯 Day 19 Interview Questions
+
+### Linux / Shell
+
+1. What is `find` used for?
+2. How do you find files older than 7 days?
+3. How do you delete files older than 30 days?
+4. Difference between `tar` and `gzip`?
+5. How do you create a `.tar.gz` file?
+6. How do you extract a `.tar.gz` file?
+7. How do you verify a backup archive?
+8. What is `$1`?
+9. What is `$?`?
+10. Why should scripts validate their arguments?
+
+### Cron ⭐⭐⭐
+
+11. What is cron?
+12. What is the syntax of crontab?
+13. How do you schedule a script every 5 minutes?
+14. How do you schedule a script every day at 2 AM?
+15. How do you schedule a job every Sunday?
+16. Difference between `crontab -l` and `crontab -e`?
+17. How do you troubleshoot a cron job that isn't running?
+18. Why should cron jobs use absolute paths?
+19. How do you redirect cron output to a log file?
+20. What does `2>&1` mean?
+
+---
+
+# ⭐ Real DevOps Interview Scenario
+
+### Question:
+
+**"You need to automate daily server backups. How would you design the solution?"**
+
+A strong answer:
+
+> I would first validate the source and backup directories. Then I would create a timestamped compressed archive using `tar`. After creating the backup, I would verify that the archive exists and can be read. I would retain backups according to the required retention policy and remove older backups. I would log the success or failure of each operation and schedule the script using cron. For troubleshooting, I would check the script manually, permissions, cron configuration, absolute paths, and the backup logs.
+
+That answer demonstrates:
+
+```text
+Validation
+   ↓
+Backup
+   ↓
+Verification
+   ↓
+Retention
+   ↓
+Logging
+   ↓
+Cron
+   ↓
+Troubleshooting
+```
+
+# 🧠 Your Shell Scripting Progress
+
+```text
+DAY 16
+Variables
+Input
+Conditions
+       ↓
+DAY 17
+Loops
+Arguments
+Error Handling
+       ↓
+DAY 18
+Functions
+Local Variables
+Strict Mode
+System Information
+       ↓
+DAY 19
+Log Rotation
+Backup
+Cron
+Logging
+Automation
+       ↓
+       ⭐
+REAL DEVOPS AUTOMATION
+```
