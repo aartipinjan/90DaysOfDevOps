@@ -1,0 +1,597 @@
+# Day 10 – File Permissions & File Operations Challenge
+
+## Objective
+
+Learn how to create, read, modify, and manage files in Linux while understanding Linux file permissions using `chmod`.
+
+---
+
+# Task 1 – Create Files
+
+## 1. Create an Empty File
+
+### Command
+
+```bash
+touch devops.txt
+```
+
+### Observation
+
+Created an empty file named `devops.txt`.
+
+---
+
+## 2. Create a File with Content
+
+```bash
+echo "Linux file permissions are important." > notes.txt
+echo "DevOps engineers work with configuration files." >> notes.txt
+echo "Practice Linux commands every day." >> notes.txt
+```
+
+### Observation
+
+Created `notes.txt` and added three lines of content.
+
+---
+
+## 3. Create a Shell Script
+
+```bash
+vim script.sh
+```
+
+### Content
+
+```bash
+#!/bin/bash
+echo "Hello DevOps"
+```
+
+Save and exit.
+
+### Verify
+
+```bash
+ls -l
+```
+
+### Observation
+
+Verified that the files and script were created successfully.
+
+---
+
+# Task 2 – Read Files
+
+## 1. Read `notes.txt`
+
+```bash
+cat notes.txt
+```
+
+### Output
+
+```text
+Linux file permissions are important.
+DevOps engineers work with configuration files.
+Practice Linux commands every day.
+```
+
+### Observation
+
+Displayed the complete contents of `notes.txt`.
+
+---
+
+## 2. Open `script.sh` in Read-Only Mode
+
+```bash
+vim -R script.sh
+```
+
+### Observation
+
+Viewed the script in read-only mode without modifying the file.
+
+---
+
+## 3. Display the First 5 Lines of `/etc/passwd`
+
+```bash
+head -n 5 /etc/passwd
+```
+
+### Observation
+
+Displayed the first five lines of `/etc/passwd`.
+
+Example:
+
+```text
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+bin:x:2:2:bin:/bin:/usr/sbin/nologin
+sys:x:3:3:sys:/dev:/usr/sbin/nologin
+sync:x:4:65534:sync:/bin:/bin/sync
+```
+
+---
+
+## 4. Display the Last 5 Lines of `/etc/passwd`
+
+```bash
+tail -n 5 /etc/passwd
+```
+
+### Observation
+
+Displayed the last five lines of `/etc/passwd`.
+
+> **Note:** Keep the actual output from your machine here rather than using a fixed example because `/etc/passwd` differs between systems.
+
+---
+
+# Task 3 – Understand Linux Permissions
+
+## Check Current Permissions
+
+```bash
+ls -l devops.txt notes.txt script.sh
+```
+
+### Example Format
+
+```text
+-rw-r--r--  owner group  ... devops.txt
+-rw-r--r--  owner group  ... notes.txt
+-rw-r--r--  owner group  ... script.sh
+```
+
+### Permission Format
+
+```text
+-rwxrwxrwx
+ │   │   │
+ │   │   └── Others
+ │   └────── Group
+ └────────── Owner
+```
+
+| Permission    | Numeric Value |
+| ------------- | ------------: |
+| Read (`r`)    |             4 |
+| Write (`w`)   |             2 |
+| Execute (`x`) |             1 |
+
+### Example
+
+```text
+rwx = 7
+rw- = 6
+r-x = 5
+r-- = 4
+```
+
+### Observation
+
+Initially:
+
+* Owner has read and write permission.
+* Group has read permission.
+* Others have read permission.
+* `script.sh` does not have execute permission yet.
+
+---
+
+# Task 4 – Modify Permissions
+
+## 1. Make `script.sh` Executable
+
+```bash
+chmod +x script.sh
+```
+
+### Verify
+
+```bash
+ls -l script.sh
+```
+
+### Execute
+
+```bash
+./script.sh
+```
+
+### Output
+
+```text
+Hello DevOps
+```
+
+### Observation
+
+Adding execute permission allowed the shell script to run directly.
+
+---
+
+## 2. Make `devops.txt` Read-Only
+
+```bash
+chmod a-w devops.txt
+```
+
+### Verify
+
+```bash
+ls -l devops.txt
+```
+
+### Observation
+
+Write permission was removed for the owner, group, and others.
+
+---
+
+## 3. Set `notes.txt` Permissions to `640`
+
+```bash
+chmod 640 notes.txt
+```
+
+### Verify
+
+```bash
+ls -l notes.txt
+```
+
+### Permission Breakdown
+
+```text
+640
+
+Owner  → 6 = rw-
+Group  → 4 = r--
+Others → 0 = ---
+```
+
+Therefore:
+
+```text
+Owner  → read + write
+Group  → read
+Others → no permissions
+```
+
+---
+
+## 4. Create a Project Directory
+
+```bash
+mkdir project
+```
+
+### Set Permissions
+
+```bash
+chmod 755 project
+```
+
+### Verify
+
+```bash
+ls -ld project
+```
+
+### Permission Breakdown
+
+```text
+755
+
+Owner  → rwx
+Group  → r-x
+Others → r-x
+```
+
+`755` is commonly used when a directory should be accessible and traversable by other users but only the owner should modify its contents.
+
+---
+
+# Task 5 – Test Permissions
+
+## 1. Try Writing to the Read-Only File
+
+```bash
+echo "Testing" >> devops.txt
+```
+
+### Expected Result
+
+```text
+Permission denied
+```
+
+### Observation
+
+The file cannot be modified because write permission was removed.
+
+> This test should be performed as a user that does not have another way to write to the file, such as `root`.
+
+---
+
+## 2. Remove Execute Permission
+
+```bash
+chmod -x script.sh
+```
+
+### Verify
+
+```bash
+ls -l script.sh
+```
+
+### Try Running the Script
+
+```bash
+./script.sh
+```
+
+### Expected Result
+
+```text
+Permission denied
+```
+
+### Observation
+
+The script cannot be executed directly because execute permission has been removed.
+
+---
+
+# Permission Quick Reference
+
+```text
+             Owner   Group   Others
+
+rwx          7       7       7
+rw-          6       6       -
+r-x          5       5       5
+r--          4       4       4
+---          0       0       0
+```
+
+Common examples:
+
+```text
+755 → rwx r-x r-x
+644 → rw- r-- r--
+640 → rw- r-- ---
+600 → rw- --- ---
+```
+
+---
+
+# Commands Used
+
+```bash
+touch devops.txt
+
+echo "Linux file permissions are important." > notes.txt
+echo "DevOps engineers work with configuration files." >> notes.txt
+echo "Practice Linux commands every day." >> notes.txt
+
+vim script.sh
+
+ls -l
+
+cat notes.txt
+
+vim -R script.sh
+
+head -n 5 /etc/passwd
+
+tail -n 5 /etc/passwd
+
+chmod +x script.sh
+
+./script.sh
+
+chmod a-w devops.txt
+
+chmod 640 notes.txt
+
+mkdir project
+
+chmod 755 project
+
+echo "Testing" >> devops.txt
+
+chmod -x script.sh
+
+./script.sh
+```
+
+---
+
+# Files Created
+
+```text
+devops.txt
+notes.txt
+script.sh
+project/
+```
+
+---
+
+# Verification Checklist
+
+* ✅ Created all required files
+* ✅ Read files using `cat`, `head`, `tail`, and `vim`
+* ✅ Understood the Linux `rwx` permission model
+* ✅ Made a shell script executable
+* ✅ Changed permissions using symbolic and numeric `chmod`
+* ✅ Created a directory with `755` permissions
+* ✅ Tested permission-related failures
+
+---
+
+# Key Learnings
+
+* `touch` creates an empty file.
+* `cat`, `head`, and `tail` are useful for reading files.
+* `vim -R` opens a file in read-only mode.
+* `chmod +x` adds execute permission.
+* `chmod a-w` removes write permission from owner, group, and others.
+* `chmod 640` gives:
+
+  * Owner → read/write
+  * Group → read
+  * Others → no access
+* `chmod 755` gives:
+
+  * Owner → read/write/execute
+  * Group → read/execute
+  * Others → read/execute
+* Linux permissions determine who can read, write, and execute files and directories.
+
+---
+
+# Real-World DevOps Connection
+
+File permissions are important when working with:
+
+```text
+Configuration files
+        ↓
+/etc/*.conf
+
+Scripts
+        ↓
+*.sh
+
+Application files
+        ↓
+/opt/app
+
+Logs
+        ↓
+/var/log
+
+Deployment directories
+        ↓
+/var/www
+```
+
+For example, a deployment script may need execute permission:
+
+```bash
+chmod +x deploy.sh
+```
+
+A configuration file may need to be restricted:
+
+```bash
+chmod 640 application.conf
+```
+
+And an application directory may need controlled ownership and permissions.
+
+---
+
+# Troubleshooting Example
+
+### Problem
+
+A script returns:
+
+```text
+Permission denied
+```
+
+### Investigation
+
+Check the permissions:
+
+```bash
+ls -l script.sh
+```
+
+Check ownership:
+
+```bash
+ls -l script.sh
+```
+
+Check the current user:
+
+```bash
+whoami
+```
+
+If the script does not have execute permission:
+
+```bash
+chmod +x script.sh
+```
+
+Then test again:
+
+```bash
+./script.sh
+```
+
+### Troubleshooting Flow
+
+```text
+Permission Denied
+       ↓
+Check user
+       ↓
+Check ownership
+       ↓
+Check permissions
+       ↓
+Correct permissions/ownership
+       ↓
+Test again
+```
+
+---
+
+# Conclusion
+
+This exercise demonstrated how Linux handles **file creation, file reading, file permissions, executable scripts, and directories**.
+
+I practiced both symbolic and numeric permission management and verified the results by intentionally creating permission-related failures.
+
+### Final Understanding
+
+```text
+File / Directory
+       ↓
+Owner
+       ↓
+Group
+       ↓
+Others
+       ↓
+Permissions
+       ↓
+Read / Write / Execute
+```
+
+> **Linux permissions control access to files and directories and are an essential part of secure Linux administration and DevOps operations.**
+
+### One thing I would change in your actual lab notes
+
+For `tail -n 5 /etc/passwd`, **use your real output**. The earlier output you pasted:
+
+```text
+root:x:0:
+daemon:x:1:
+bin:x:2:
+...
