@@ -1,0 +1,543 @@
+# Day 22 – Introduction to Git: Your First Repository
+
+## 🎯 Objective
+
+Today I practiced the basics of Git by creating a local repository, configuring Git, creating a Git commands reference, staging and committing changes, and viewing commit history.
+
+---
+
+# 1. Git Installation & Configuration
+
+| Task               | Command                                                   | Purpose                   |
+| ------------------ | --------------------------------------------------------- | ------------------------- |
+| Check Git version  | `git --version`                                           | Verify Git installation   |
+| Configure username | `git config --global user.name "Aarti"`                   | Set Git username          |
+| Configure email    | `git config --global user.email "your-email@example.com"` | Set commit email          |
+| View configuration | `git config --list`                                       | Display Git configuration |
+
+### Example
+
+```bash
+git --version
+
+git config --global user.name "Aarti"
+
+git config --global user.email "your-email@example.com"
+
+git config --list
+```
+
+> **Note:** Replace `your-email@example.com` with the email you actually use for your Git/GitHub account.
+
+---
+
+# 2. Create a Git Project
+
+| Step             | Command                     | Purpose                     |
+| ---------------- | --------------------------- | --------------------------- |
+| Create directory | `mkdir devops-git-practice` | Create project directory    |
+| Enter directory  | `cd devops-git-practice/`   | Move into project           |
+| Initialize Git   | `git init`                  | Create local Git repository |
+| Check status     | `git status`                | Check repository state      |
+
+### Workflow
+
+```text
+Create Directory
+       ↓
+     cd
+       ↓
+   git init
+       ↓
+ git status
+```
+
+---
+
+# 3. Understanding `.git/`
+
+| Command   | Purpose                       |
+| --------- | ----------------------------- |
+| `ls -a`   | Show hidden files/directories |
+| `cd .git` | Enter Git metadata directory  |
+| `ls`      | View `.git` contents          |
+| `cd ..`   | Return to project directory   |
+
+### Important Concept
+
+When you run:
+
+```bash
+git init
+```
+
+Git creates a hidden:
+
+```text
+.git/
+```
+
+directory.
+
+The `.git/` directory contains Git's internal repository information and metadata.
+
+```text
+devops-git-practice/
+│
+├── git-commands.md
+│
+└── .git/
+    ├── HEAD
+    ├── config
+    ├── objects/
+    ├── refs/
+    └── ...
+```
+
+---
+
+# 4. Git Commands Reference File
+
+I created:
+
+```text
+git-commands.md
+```
+
+The file contains the Git commands practiced during the exercise.
+
+### Sections
+
+| Section          | Purpose                            |
+| ---------------- | ---------------------------------- |
+| Setup & Config   | Configure Git                      |
+| Repository Setup | Create and initialize repositories |
+| Basic Workflow   | Add and commit changes             |
+| Viewing History  | Review commits                     |
+
+---
+
+# 5. Git Basic Workflow
+
+| Stage             | Command           | Purpose                   |
+| ----------------- | ----------------- | ------------------------- |
+| Working Directory | Edit/create files | Make changes              |
+| Check changes     | `git status`      | See current state         |
+| Stage changes     | `git add`         | Select changes for commit |
+| Commit            | `git commit`      | Save staged changes       |
+| View history      | `git log`         | Review commits            |
+
+### Complete Workflow
+
+```text
+Working Directory
+       ↓
+   git status
+       ↓
+    git add
+       ↓
+ Staging Area
+       ↓
+   git commit
+       ↓
+   Repository
+       ↓
+    git log
+```
+
+---
+
+# 6. `git status`
+
+```bash
+git status
+```
+
+### Purpose
+
+Shows:
+
+* Current branch
+* Modified files
+* Untracked files
+* Staged changes
+* Unstaged changes
+
+---
+
+# 7. Staging Changes
+
+### Stage a Specific File
+
+```bash
+git add git-commands.md
+```
+
+### Stage All Changes
+
+```bash
+git add .
+```
+
+| Command        | Meaning                                   |
+| -------------- | ----------------------------------------- |
+| `git add file` | Stage one specific file                   |
+| `git add .`    | Stage changes under the current directory |
+
+---
+
+# 8. Commit Changes
+
+```bash
+git commit -m "first commit"
+```
+
+### Meaning
+
+| Part             | Meaning                   |
+| ---------------- | ------------------------- |
+| `git`            | Git command               |
+| `commit`         | Create a commit           |
+| `-m`             | Provide commit message    |
+| `"first commit"` | Description of the change |
+
+### Good Commit Message Examples
+
+```bash
+git commit -m "add git commands reference"
+git commit -m "add restore command"
+git commit -m "add git log command"
+```
+
+---
+
+# 9. Build Commit History
+
+### First Commit
+
+```bash
+git add git-commands.md
+git commit -m "first commit"
+```
+
+### Second Commit
+
+```bash
+git add git-commands.md
+git commit -m "adding restore command"
+```
+
+### Third Commit
+
+```bash
+git add git-commands.md
+git commit -m "adding git log command"
+```
+
+### Fourth Commit
+
+```bash
+git add .
+git commit -m "adding git log --oneline command"
+```
+
+---
+
+# 10. View Commit History
+
+### Detailed History
+
+```bash
+git log
+```
+
+Shows information such as:
+
+| Information    | Description                 |
+| -------------- | --------------------------- |
+| Commit ID      | Unique identifier of commit |
+| Author         | Person who created commit   |
+| Date           | Commit date                 |
+| Commit message | Description of change       |
+
+### Compact History
+
+```bash
+git log --oneline
+```
+
+Example:
+
+```text
+a1b2c3d adding git log --oneline command
+d4e5f6g adding git log command
+h7i8j9k adding restore command
+x1y2z3a first commit
+```
+
+---
+
+# 11. `git add` vs `git commit`
+
+| `git add`                     | `git commit`            |
+| ----------------------------- | ----------------------- |
+| Moves changes to staging area | Saves staged changes    |
+| Does not create commit        | Creates a commit        |
+| Prepares changes              | Records changes         |
+| Can stage selected files      | Records staged snapshot |
+
+### Example
+
+```bash
+git add git-commands.md
+
+git commit -m "update git commands"
+```
+
+---
+
+# 12. Staging Area
+
+The staging area allows me to select exactly which changes should be included in the next commit.
+
+### Git Architecture
+
+```text
+┌─────────────────────┐
+│   Working Directory │
+│                     │
+│  Modified Files     │
+└──────────┬──────────┘
+           │
+        git add
+           ↓
+┌─────────────────────┐
+│    Staging Area     │
+│                     │
+│ Selected Changes    │
+└──────────┬──────────┘
+           │
+       git commit
+           ↓
+┌─────────────────────┐
+│     Repository      │
+│                     │
+│  Commit History     │
+└─────────────────────┘
+```
+
+---
+
+# 13. Working Directory vs Staging Area vs Repository
+
+| Area              | What it contains                 | Main command |
+| ----------------- | -------------------------------- | ------------ |
+| Working Directory | Files being created/modified     | Edit files   |
+| Staging Area      | Changes selected for next commit | `git add`    |
+| Repository        | Committed project history        | `git commit` |
+
+### Easy Way to Remember
+
+```text
+Working Directory
+       │
+       │ git add
+       ↓
+Staging Area
+       │
+       │ git commit
+       ↓
+Repository
+```
+
+---
+
+# 14. `.git/` Directory
+
+| Concept    | Explanation                                                            |
+| ---------- | ---------------------------------------------------------------------- |
+| Created by | `git init`                                                             |
+| Name       | `.git`                                                                 |
+| Type       | Hidden directory                                                       |
+| Contains   | Git internal information and metadata                                  |
+| Purpose    | Allows Git to manage repository history                                |
+| If deleted | Local Git repository history/configuration is lost from that directory |
+
+### Important
+
+```bash
+git init
+```
+
+creates:
+
+```text
+.git/
+```
+
+Do **not** normally modify or delete files inside `.git/` manually.
+
+---
+
+# 15. Important Git Commands
+
+| Category         | Command                     | Purpose                  |
+| ---------------- | --------------------------- | ------------------------ |
+| Version          | `git --version`             | Check Git version        |
+| Configuration    | `git config --list`         | View configuration       |
+| Create directory | `mkdir devops-git-practice` | Create project directory |
+| Initialize       | `git init`                  | Initialize repository    |
+| Status           | `git status`                | Check repository state   |
+| Hidden files     | `ls -a`                     | Show hidden files        |
+| Stage file       | `git add file`              | Stage specific file      |
+| Stage all        | `git add .`                 | Stage changes            |
+| Commit           | `git commit -m "message"`   | Create commit            |
+| History          | `git log`                   | Detailed commit history  |
+| Compact history  | `git log --oneline`         | Short commit history     |
+
+---
+
+# 16. Commands I Practiced
+
+```bash
+# Check Git
+git --version
+
+# Configure Git
+git config --global user.name "Aarti"
+git config --global user.email "your-email@example.com"
+
+# View configuration
+git config --list
+
+# Create project
+mkdir devops-git-practice
+cd devops-git-practice/
+
+# Initialize repository
+git init
+
+# Check status
+git status
+
+# View hidden files
+ls -a
+
+# Explore .git
+cd .git
+ls
+cd ..
+
+# Stage file
+git add git-commands.md
+
+# Stage all changes
+git add .
+
+# Commit
+git commit -m "first commit"
+
+# View history
+git log
+
+# Compact history
+git log --oneline
+```
+
+---
+
+# 17. Git Interview Quick Revision
+
+| Question                          | Short Answer                                                        |
+| --------------------------------- | ------------------------------------------------------------------- |
+| What is Git?                      | A distributed version control system used to track changes in files |
+| What does `git init` do?          | Initializes a directory as a Git repository                         |
+| What is `.git`?                   | Directory containing Git's internal repository metadata             |
+| What does `git status` do?        | Shows the current state of the working directory and staging area   |
+| What does `git add` do?           | Moves selected changes into the staging area                        |
+| What does `git commit` do?        | Saves staged changes as a commit                                    |
+| What is the staging area?         | A place where changes are selected before committing                |
+| What does `git log` do?           | Displays commit history                                             |
+| What does `git log --oneline` do? | Displays compact commit history                                     |
+| What is a commit?                 | A recorded snapshot of staged changes                               |
+| Why use commit messages?          | To describe what changed in a commit                                |
+
+---
+
+# 18. Git Workflow to Remember
+
+```text
+              Git Workflow
+
+           Create / Modify
+                 │
+                 ↓
+          git status
+                 │
+                 ↓
+             git add
+                 │
+                 ↓
+          Staging Area
+                 │
+                 ↓
+            git commit
+                 │
+                 ↓
+            Repository
+                 │
+                 ↓
+             git log
+```
+
+---
+
+# 19. Day 22 Learning Checklist
+
+* [x] Install/check Git
+* [x] Configure Git username
+* [x] Configure Git email
+* [x] Verify Git configuration
+* [x] Create project directory
+* [x] Initialize Git repository
+* [x] Understand `.git/`
+* [x] Check repository status
+* [x] Create `git-commands.md`
+* [x] Stage a file using `git add`
+* [x] Stage all changes using `git add .`
+* [x] Create commits
+* [x] Write commit messages
+* [x] View detailed history using `git log`
+* [x] View compact history using `git log --oneline`
+* [x] Understand Working Directory
+* [x] Understand Staging Area
+* [x] Understand Repository
+* [x] Understand `git add` vs `git commit`
+* [x] Build multiple commits
+* [x] Understand basic Git workflow
+
+---
+
+# 🎯 Day 22 – Final Takeaway
+
+> **Git tracks changes over time by storing commits in a repository. The staging area gives me control over which changes I want to include in the next commit.**
+
+### My Git Mental Model
+
+```text
+Working Directory
+       ↓
+    git add
+       ↓
+ Staging Area
+       ↓
+  git commit
+       ↓
+ Repository
+       ↓
+    git log
+```
+
+### One-Line Interview Answer
+
+**Git is a distributed version control system that tracks changes to files and allows developers to manage project history through commits.**
