@@ -1,0 +1,910 @@
+# Day 20 – Bash Scripting Challenge: Log Analyzer & Report Generator
+
+## 🎯 Objective
+
+Today I built a practical **Bash Log Analyzer** that automatically analyzes a log file, identifies errors and critical events, finds the most common error messages, and generates a daily summary report.
+
+### Concepts Practiced
+
+* Bash command-line arguments
+* Input validation
+* `grep`
+* `awk`
+* `sort`
+* `uniq`
+* `head`
+* `wc`
+* Line-number searching
+* Pipes `|`
+* File handling
+* Report generation
+* Bash command substitution
+
+---
+
+# Task 1 – Command-Line Argument & Input Validation
+
+The script accepts the **log file path** as a command-line argument.
+
+### Check whether an argument was provided
+
+```bash
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <log-file>"
+    exit 1
+fi
+```
+
+### Explanation
+
+| Variable | Meaning             |
+| -------- | ------------------- |
+| `$#`     | Number of arguments |
+| `$0`     | Script name         |
+| `$1`     | First argument      |
+
+Example:
+
+```bash
+./log_analyzer.sh sample_log.log
+```
+
+Here:
+
+```text
+$0 → ./log_analyzer.sh
+$1 → sample_log.log
+```
+
+---
+
+## Check Whether the Log File Exists
+
+```bash
+if [ ! -f "$1" ]; then
+    echo "Error: Log file does not exist"
+    exit 1
+fi
+```
+
+### What I Learned
+
+The `-f` condition checks whether the given path is a **regular file**.
+
+The `!` means **NOT**.
+
+Therefore:
+
+```bash
+[ ! -f "$1" ]
+```
+
+means:
+
+> The specified file does not exist as a regular file.
+
+---
+
+# Task 2 – Count Errors
+
+The script counts lines containing either `ERROR` or `Failed`.
+
+```bash
+ERROR_COUNT=$(grep -Ei "ERROR|Failed" "$LOG_FILE" | wc -l)
+```
+
+### Breakdown
+
+```bash
+grep -Ei "ERROR|Failed" "$LOG_FILE"
+```
+
+Searches for:
+
+* `ERROR`
+* `Failed`
+
+The options mean:
+
+```text
+-E → Extended regular expressions
+-i → Case-insensitive search
+```
+
+Then:
+
+```bash
+wc -l
+```
+
+counts the number of matching lines.
+
+### Display the Result
+
+```bash
+echo "Total errors: $ERROR_COUNT"
+```
+
+---
+
+# Task 3 – Find Critical Events
+
+To find critical events along with their line numbers:
+
+```bash
+grep -n "CRITICAL" "$LOG_FILE"
+```
+
+### Example
+
+```text
+--- Critical Events ---
+
+84:2025-07-29 10:15:23 CRITICAL Disk space below threshold
+217:2025-07-29 14:32:01 CRITICAL Database connection lost
+```
+
+### What I Learned
+
+The `-n` option displays the **line number** where the matching text was found.
+
+This is very useful during troubleshooting because it helps quickly locate an event inside a large log file.
+
+---
+
+# Task 4 – Find Top 5 Error Messages
+
+The following pipeline extracts error messages and determines which ones occur most frequently.
+
+```bash
+grep "ERROR" "$LOG_FILE" |
+awk '{$1=$2=$3=""; print}' |
+sort |
+uniq -c |
+sort -rn |
+head -5
+```
+
+---
+
+## Understanding the Pipeline
+
+### Step 1 – `grep`
+
+```bash
+grep "ERROR" "$LOG_FILE"
+```
+
+Finds lines containing `ERROR`.
+
+Example:
+
+```text
+2026-09-04 10:10:20 ERROR Connection timed out
+2026-09-04 10:15:32 ERROR File not found
+2026-09-04 10:20:15 ERROR Connection timed out
+```
+
+---
+
+### Step 2 – `awk`
+
+```bash
+awk '{$1=$2=$3=""; print}'
+```
+
+Removes the first three whitespace-separated fields.
+
+For example:
+
+```text
+2026-09-04 10:10:20 ERROR Connection timed out
+```
+
+becomes approximately:
+
+```text
+ERROR Connection timed out
+```
+
+> **Important:** This assumes the first three whitespace-separated fields are timestamp-related. The exact `awk` logic should match the actual log format.
+
+---
+
+### Step 3 – `sort`
+
+```bash
+sort
+```
+
+Sorts the messages alphabetically.
+
+This is important because `uniq` only groups **adjacent identical lines**.
+
+---
+
+### Step 4 – `uniq -c`
+
+```bash
+uniq -c
+```
+
+Counts repeated messages.
+
+Example:
+
+```text
+10 Connection timed out
+5 File not found
+3 Permission denied
+```
+
+---
+
+### Step 5 – `sort -rn`
+
+```bash
+sort -rn
+```
+
+Sorts the results by number in descending order.
+
+```text
+-r → Reverse order
+-n → Numeric sorting
+```
+
+---
+
+### Step 6 – `head -5`
+
+```bash
+head -5
+```
+
+Displays only the top five results.
+
+### Example
+
+```text
+--- Top 5 Error Messages ---
+
+45 Connection timed out
+32 File not found
+28 Permission denied
+15 Disk I/O error
+9 Out of memory
+```
+
+---
+
+# Task 5 – Generate Summary Report
+
+The report filename is created using the current date.
+
+```bash
+DATE=$(date +%Y-%m-%d)
+REPORT="log_report_${DATE}.txt"
+```
+
+Example:
+
+```text
+log_report_2026-09-04.txt
+```
+
+The report contains:
+
+* Date of analysis
+* Log file name
+* Total lines processed
+* Total error count
+* Top 5 error messages
+* Critical events
+
+---
+
+# Task 6 – Complete `log_analyzer.sh`
+
+```bash
+#!/bin/bash
+
+# Check whether an argument was provided
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <log-file>"
+    exit 1
+fi
+
+LOG_FILE="$1"
+
+# Check whether the log file exists
+if [ ! -f "$LOG_FILE" ]; then
+    echo "Error: Log file does not exist"
+    exit 1
+fi
+
+# Generate report name
+DATE=$(date +%Y-%m-%d)
+REPORT="log_report_${DATE}.txt"
+
+# Count total lines
+TOTAL_LINES=$(wc -l < "$LOG_FILE")
+
+# Count ERROR or Failed lines
+ERROR_COUNT=$(grep -Ei "ERROR|Failed" "$LOG_FILE" | wc -l)
+
+# Find critical events
+CRITICAL_EVENTS=$(grep -n "CRITICAL" "$LOG_FILE")
+
+# Find top 5 error messages
+TOP_ERRORS=$(grep "ERROR" "$LOG_FILE" |
+    awk '{$1=$2=$3=""; print}' |
+    sort |
+    uniq -c |
+    sort -rn |
+    head -5)
+
+# Display results
+echo "Log Analysis Report"
+echo "==================="
+echo "Log file: $LOG_FILE"
+echo "Total lines: $TOTAL_LINES"
+echo "Total errors: $ERROR_COUNT"
+
+echo
+echo "--- Critical Events ---"
+echo "$CRITICAL_EVENTS"
+
+echo
+echo "--- Top 5 Error Messages ---"
+echo "$TOP_ERRORS"
+
+# Generate report file
+cat > "$REPORT" << EOF
+Log Analysis Report
+===================
+
+Date of Analysis: $DATE
+Log File: $LOG_FILE
+Total Lines Processed: $TOTAL_LINES
+Total Error Count: $ERROR_COUNT
+
+--- Top 5 Error Messages ---
+
+$TOP_ERRORS
+
+--- Critical Events ---
+
+$CRITICAL_EVENTS
+EOF
+
+echo
+echo "Report generated: $REPORT"
+```
+
+---
+
+# Task 7 – Make the Script Executable
+
+```bash
+chmod +x log_analyzer.sh
+```
+
+Verify permissions:
+
+```bash
+ls -l log_analyzer.sh
+```
+
+Example:
+
+```text
+-rwxr-xr-x 1 user user 1800 Sep 4 04:30 log_analyzer.sh
+```
+
+---
+
+# Task 8 – Run the Script
+
+Run the analyzer against a sample log:
+
+```bash
+./log_analyzer.sh sample_log.log
+```
+
+Example output:
+
+```text
+Log Analysis Report
+===================
+Log file: sample_log.log
+Total lines: 250
+Total errors: 97
+
+--- Critical Events ---
+
+84:2025-07-29 10:15:23 CRITICAL Disk space below threshold
+217:2025-07-29 14:32:01 CRITICAL Database connection lost
+
+--- Top 5 Error Messages ---
+
+45 Connection timed out
+32 File not found
+28 Permission denied
+15 Disk I/O error
+9 Out of memory
+
+Report generated: log_report_2026-09-04.txt
+```
+
+---
+
+# Task 9 – Generated Report
+
+Check the generated report:
+
+```bash
+cat log_report_$(date +%Y-%m-%d).txt
+```
+
+Example:
+
+```text
+Log Analysis Report
+===================
+
+Date of Analysis: 2026-09-04
+Log File: sample_log.log
+Total Lines Processed: 250
+Total Error Count: 97
+
+--- Top 5 Error Messages ---
+
+45 Connection timed out
+32 File not found
+28 Permission denied
+15 Disk I/O error
+9 Out of memory
+
+--- Critical Events ---
+
+84:2025-07-29 10:15:23 CRITICAL Disk space below threshold
+217:2025-07-29 14:32:01 CRITICAL Database connection lost
+```
+
+---
+
+# Task 10 – Optional Archive Processed Logs
+
+If required, create an archive directory:
+
+```bash
+mkdir -p archive
+```
+
+Move the processed log:
+
+```bash
+mv "$LOG_FILE" archive/
+```
+
+Display confirmation:
+
+```bash
+echo "Log file moved to archive/"
+```
+
+### ⚠️ Important
+
+I would **not automatically enable this initially**.
+
+Moving the original log changes its location and could affect applications that are still writing to that file.
+
+For a production environment, log rotation tools such as `logrotate` are generally more appropriate for managing active application/system logs.
+
+---
+
+# Commands & Tools Practiced
+
+## 1. `grep`
+
+Search for a pattern:
+
+```bash
+grep "ERROR" sample_log.log
+```
+
+---
+
+## 2. `grep -n`
+
+Search and display line numbers:
+
+```bash
+grep -n "CRITICAL" sample_log.log
+```
+
+---
+
+## 3. `grep -E`
+
+Search multiple patterns:
+
+```bash
+grep -E "ERROR|Failed" sample_log.log
+```
+
+---
+
+## 4. `grep -i`
+
+Case-insensitive search:
+
+```bash
+grep -i "error" sample_log.log
+```
+
+---
+
+## 5. `wc -l`
+
+Count lines:
+
+```bash
+wc -l sample_log.log
+```
+
+---
+
+## 6. `awk`
+
+Process and manipulate text:
+
+```bash
+awk '{$1=$2=$3=""; print}' file
+```
+
+---
+
+## 7. `sort`
+
+Sort text:
+
+```bash
+sort file
+```
+
+---
+
+## 8. `uniq -c`
+
+Count duplicate lines:
+
+```bash
+uniq -c
+```
+
+---
+
+## 9. `sort -rn`
+
+Sort numbers in descending order:
+
+```bash
+sort -rn
+```
+
+---
+
+## 10. `head`
+
+Display the first five results:
+
+```bash
+head -5
+```
+
+---
+
+## 11. `date`
+
+Generate the current date:
+
+```bash
+date +%Y-%m-%d
+```
+
+---
+
+## 12. Command Substitution
+
+Store command output inside a variable:
+
+```bash
+TOTAL_LINES=$(wc -l < "$LOG_FILE")
+```
+
+This allows the output of one command to be reused later in the script.
+
+---
+
+# 🔄 Log Analysis Flow
+
+```text
+                Log File
+                   ↓
+          Validate Input
+                   ↓
+        Check File Exists
+                   ↓
+          Count Total Lines
+                   ↓
+        Find ERROR / Failed
+                   ↓
+        Find CRITICAL Events
+                   ↓
+       Extract ERROR Messages
+                   ↓
+                  awk
+                   ↓
+                 sort
+                   ↓
+                uniq -c
+                   ↓
+               sort -rn
+                   ↓
+                 head
+                   ↓
+          Generate Report
+```
+
+---
+
+# 🛠️ Troubleshooting Approach
+
+If the script does not work, I would follow this process.
+
+### 1. Check whether an argument was provided
+
+```bash
+./log_analyzer.sh
+```
+
+Expected:
+
+```text
+Usage: ./log_analyzer.sh <log-file>
+```
+
+---
+
+### 2. Check whether the log file exists
+
+```bash
+ls -l sample_log.log
+```
+
+---
+
+### 3. Check script permissions
+
+```bash
+ls -l log_analyzer.sh
+```
+
+---
+
+### 4. Make the script executable
+
+```bash
+chmod +x log_analyzer.sh
+```
+
+---
+
+### 5. Run the script manually
+
+```bash
+./log_analyzer.sh sample_log.log
+```
+
+---
+
+### 6. Check the generated report
+
+```bash
+ls -lh log_report_*.txt
+```
+
+---
+
+### 7. Read the report
+
+```bash
+cat log_report_$(date +%Y-%m-%d).txt
+```
+
+---
+
+### 8. Test individual commands
+
+Instead of troubleshooting the complete script immediately, test each pipeline separately.
+
+```bash
+grep -Ei "ERROR|Failed" sample_log.log
+```
+
+```bash
+grep -n "CRITICAL" sample_log.log
+```
+
+```bash
+wc -l sample_log.log
+```
+
+```bash
+grep "ERROR" sample_log.log | wc -l
+```
+
+This makes troubleshooting much easier.
+
+---
+
+# 🧠 What I Learned – 5 Key Points
+
+### 1. Log Analysis with `grep`
+
+`grep` can quickly search large log files for errors, failures, warnings, and critical events.
+
+---
+
+### 2. Linux Pipelines
+
+Commands can be connected using:
+
+```bash
+|
+```
+
+For example:
+
+```bash
+grep "ERROR" file.log | sort | uniq -c | sort -rn | head -5
+```
+
+A complex operation can therefore be built from small Linux commands.
+
+---
+
+### 3. Text Processing with `awk`
+
+`awk` is useful for extracting and manipulating fields from structured text.
+
+---
+
+### 4. Automation with Bash
+
+Instead of manually checking logs every day, a Bash script can automatically:
+
+```text
+Read
+ ↓
+Analyze
+ ↓
+Filter
+ ↓
+Count
+ ↓
+Summarize
+ ↓
+Report
+```
+
+---
+
+### 5. Report Generation
+
+The script converts raw log information into a human-readable report.
+
+This is useful for:
+
+* Daily operational reports
+* Application troubleshooting
+* Incident analysis
+* Server monitoring
+* DevOps automation
+
+---
+
+# ⭐ Day 20 Key Takeaway
+
+Today I moved from basic Bash scripting to a **real-world DevOps automation use case**.
+
+I built a script that follows this workflow:
+
+```text
+Input
+  ↓
+Validation
+  ↓
+Log Analysis
+  ↓
+Filtering
+  ↓
+Text Processing
+  ↓
+Sorting & Counting
+  ↓
+Report Generation
+```
+
+The most important learning from today is that **Linux commands become much more powerful when combined using pipelines and Bash scripting**.
+
+---
+
+# 📁 Files Created
+
+```text
+day-20/
+│
+├── log_analyzer.sh
+├── sample_log.log
+├── log_report_<date>.txt
+└── day-20-solution.md
+```
+
+---
+
+# ✅ Submission Checklist
+
+* [ ] `log_analyzer.sh`
+* [ ] `sample_log.log`
+* [ ] `log_report_<date>.txt`
+* [ ] `day-20-solution.md`
+* [ ] Test argument validation
+* [ ] Test missing log file
+* [ ] Verify total line count
+* [ ] Verify error count
+* [ ] Verify critical events
+* [ ] Verify top 5 errors
+* [ ] Verify generated report
+* [ ] Commit changes
+* [ ] Push to GitHub
+
+---
+
+# 🚀 Learn in Public
+
+> Today I built a Bash-based Log Analyzer that uses `grep`, `awk`, `sort`, `uniq`, and `head` to analyze logs and generate a summary report.
+
+```text
+#90DaysOfDevOps
+#TrainWithShubham
+#BashScripting
+#Linux
+#DevOps
+#Automation
+```
+
+
+
+```bash
+ERROR_COUNT=$(grep -Ei "ERROR|Failed" "$LOG_FILE" | wc -l)
+```
+
+counts **lines matching either pattern**, not necessarily the number of individual errors. If one log line contains both `ERROR` and `Failed`, it is still counted once.
+
+
+
+Day 16 → Variables + Conditions
+       ↓
+Day 17 → Loops + Arguments + Error Handling
+       ↓
+Day 18 → Functions + Strict Mode
+       ↓
+Day 19 → Backup + Log Rotation + Cron
+       ↓
+Day 20 → Log Analysis + Text Processing + Reports
+```
+
+**This is exactly the direction you want for Linux/DevOps automation.**
