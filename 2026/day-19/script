@@ -1,0 +1,142 @@
+#!/bin/bash
+
+: <<'README'
+
+This is a backup script with 5-backup rotation.
+
+Usage:
+./backup.sh <path_to_source> <path_to_backup>
+
+README
+
+display_usage() {
+    echo "Usage: ./backup.sh <path_to_source> <path_to_backup>"
+}
+
+# Check arguments
+if [[ $# -ne 2 ]]
+then
+    display_usage
+    exit 1
+fi
+
+source_dir="$1"
+backup_dir="$2"
+timestamp=$(date '+%Y-%m-%d-%H-%M-%S')
+
+
+# Check source directory
+if [[ ! -d "$source_dir" ]]
+then
+    echo "Error: Source directory does not exist: $source_dir"
+    exit 1
+fi
+
+
+# Create backup directory if required
+if [[ ! -d "$backup_dir" ]]
+then
+    echo "Backup directory does not exist. Creating it..."
+    mkdir -p "$backup_dir"
+fi
+
+
+create_backup() {
+
+    backup_file="${backup_dir}/backup_${timestamp}.zip"
+
+    if zip -r "$backup_file" "$source_dir"
+    then
+        echo "Backup generated successfully"
+        echo "Backup file: $backup_file"
+    else
+        echo "Backup failed"
+        return 1
+    fi
+}
+
+
+perform_rotation() {
+
+    backups=($(ls -t "${backup_dir}/backup_"*.zip 2>/dev/null))
+
+    if [[ "${#backups[@]}" -gt 5 ]]
+    then
+        echo "Performing 5-backup rotation..."
+
+        backups_to_remove=("${backups[@]:5}")
+
+        for backup in "${backups_to_remove[@]}"
+        do
+            echo "Removing old backup: $backup"
+            rm -f "$backup"
+        done
+    else
+        echo "No rotation required"
+    fi
+}
+
+
+create_backup
+perform_rotation
+
+
+chmod +x backup.sh
+./backup.sh
+
+
+
+
+
+./backup.sh <path_to_source> <path_to_backup>
+
+
+
+                 backup.sh
+                     │
+                     ↓
+             Check arguments
+                     │
+                     ↓
+            Validate source
+                     │
+                     ↓
+          Create backup directory
+                     │
+                     ↓
+              Create ZIP
+                     │
+                     ↓
+             Verify success
+                     │
+                     ↓
+        Find existing backups
+                     │
+                     ↓
+         Sort newest → oldest
+                     │
+                     ↓
+          Keep newest 5
+                     │
+                     ↓
+           Delete older ones
+
+"How did you implement backup rotation?"
+
+You can answer:
+
+I created a Bash script that accepts the source and backup directories as command-line arguments. It generates a timestamped ZIP backup, verifies the backup operation, lists existing backups in newest-first order, retains the five latest backups, and removes older backups. This prevents unlimited backup files from consuming disk space.
+
+That's a good practical DevOps answer.
+
+One final distinction to remember
+5-backup rotation
+        ↓
+Keep latest 5 backup files
+
+
+5-day retention
+        ↓
+Delete backups older than 5 days
+
+ current script implements 5-backup rotation, not 5-day retention.
