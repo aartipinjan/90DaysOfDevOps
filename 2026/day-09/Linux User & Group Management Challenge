@@ -1,0 +1,533 @@
+# Day 09 – Linux User & Group Management Challenge
+
+## Objective
+
+Practice Linux user and group management by:
+
+* Creating users
+* Creating groups
+* Assigning users to groups
+* Configuring shared directories
+* Verifying permissions
+* Testing shared access
+
+---
+
+# Task 1 – Create Users
+
+## Create Users
+
+```bash
+sudo useradd -m tokyo
+sudo useradd -m berlin
+sudo useradd -m professor
+```
+
+### What it does
+
+The `-m` option creates a home directory for each user.
+
+---
+
+## Set Passwords
+
+```bash
+sudo passwd tokyo
+sudo passwd berlin
+sudo passwd professor
+```
+
+### What it does
+
+Sets or changes the password for each user.
+
+---
+
+## Verify Users
+
+```bash
+cat /etc/passwd | grep -E "tokyo|berlin|professor"
+```
+
+### Example Output
+
+```text
+tokyo:x:1001:1001::/home/tokyo:/bin/bash
+berlin:x:1002:1002::/home/berlin:/bin/bash
+professor:x:1003:1003::/home/professor:/bin/bash
+```
+
+### Observation
+
+Successfully created the three users.
+
+---
+
+## Verify Home Directories
+
+```bash
+ls -l /home
+```
+
+### Observation
+
+The home directories for the newly created users were created successfully.
+
+---
+
+# Task 2 – Create Groups
+
+## Create Groups
+
+```bash
+sudo groupadd developers
+sudo groupadd admins
+```
+
+## Verify Groups
+
+```bash
+cat /etc/group | grep -E "developers|admins"
+```
+
+### Example Output
+
+```text
+developers:x:1004:
+admins:x:1005:
+```
+
+### Observation
+
+Both groups were created successfully.
+
+---
+
+# Task 3 – Assign Users to Groups
+
+## Add Users to Groups
+
+```bash
+sudo usermod -aG developers tokyo
+
+sudo usermod -aG developers,admins berlin
+
+sudo usermod -aG admins professor
+```
+
+### Important
+
+The `-aG` option adds the user to supplementary groups without removing existing supplementary group memberships.
+
+---
+
+## Verify Group Membership
+
+```bash
+groups tokyo
+
+groups berlin
+
+groups professor
+```
+
+Or:
+
+```bash
+id tokyo
+
+id berlin
+
+id professor
+```
+
+### Example Output
+
+```text
+tokyo : tokyo developers
+
+berlin : berlin developers admins
+
+professor : professor admins
+```
+
+### Observation
+
+* `tokyo` belongs to **developers**.
+* `berlin` belongs to **developers** and **admins**.
+* `professor` belongs to **admins**.
+
+---
+
+# Task 4 – Shared Directory
+
+## Create Directory
+
+```bash
+sudo mkdir -p /opt/dev-project
+```
+
+## Change Group Ownership
+
+```bash
+sudo chgrp developers /opt/dev-project
+```
+
+## Set Permissions
+
+```bash
+sudo chmod 775 /opt/dev-project
+```
+
+## Verify Permissions
+
+```bash
+ls -ld /opt/dev-project
+```
+
+### Example Output
+
+```text
+drwxrwxr-x 2 root developers 4096 Aug 04 20:00 /opt/dev-project
+```
+
+### Permission Breakdown
+
+```text
+d rwx rwx r-x
+  │   │   │
+  │   │   └── Others: read + execute
+  │   └────── Group: read + write + execute
+  └────────── Owner: read + write + execute
+```
+
+Therefore:
+
+```text
+Owner  → rwx
+Group  → rwx
+Others → r-x
+```
+
+---
+
+## Test File Creation
+
+As `tokyo`:
+
+```bash
+sudo -u tokyo touch /opt/dev-project/tokyo.txt
+```
+
+As `berlin`:
+
+```bash
+sudo -u berlin touch /opt/dev-project/berlin.txt
+```
+
+## Verify
+
+```bash
+ls -l /opt/dev-project
+```
+
+### Observation
+
+Both users successfully created files inside the shared directory.
+
+This confirms that the users have the required directory permissions through the `developers` group.
+
+---
+
+# Task 5 – Team Workspace
+
+## Create User
+
+```bash
+sudo useradd -m nairobi
+```
+
+## Set Password
+
+```bash
+sudo passwd nairobi
+```
+
+---
+
+## Create Group
+
+```bash
+sudo groupadd project-team
+```
+
+---
+
+## Add Users to the Group
+
+```bash
+sudo usermod -aG project-team nairobi
+
+sudo usermod -aG project-team tokyo
+```
+
+---
+
+## Create Directory
+
+```bash
+sudo mkdir -p /opt/team-workspace
+```
+
+---
+
+## Change Group Ownership
+
+```bash
+sudo chgrp project-team /opt/team-workspace
+```
+
+---
+
+## Set Permissions
+
+```bash
+sudo chmod 775 /opt/team-workspace
+```
+
+---
+
+## Verify Permissions
+
+```bash
+ls -ld /opt/team-workspace
+```
+
+---
+
+## Test File Creation
+
+```bash
+sudo -u nairobi touch /opt/team-workspace/project.txt
+```
+
+---
+
+## Verify
+
+```bash
+ls -l /opt/team-workspace
+```
+
+### Observation
+
+`nairobi` successfully created a file inside the shared workspace.
+
+---
+
+# Additional Shared-Directory Improvement
+
+For a team-shared directory, a more controlled approach is to use the **setgid bit**:
+
+```bash
+sudo chmod 2775 /opt/team-workspace
+```
+
+The `2` sets the setgid bit on the directory.
+
+### Why this is useful
+
+New files and directories created inside the workspace can inherit the directory's group, which is useful for team collaboration.
+
+```text
+/opt/team-workspace
+        |
+        +--- group: project-team
+        |
+        +--- file1 → project-team
+        +--- file2 → project-team
+```
+
+This is a useful concept for real-world Linux administration.
+
+---
+
+# Commands Used
+
+```bash
+sudo useradd -m tokyo
+sudo useradd -m berlin
+sudo useradd -m professor
+sudo useradd -m nairobi
+
+sudo passwd tokyo
+sudo passwd berlin
+sudo passwd professor
+sudo passwd nairobi
+
+sudo groupadd developers
+sudo groupadd admins
+sudo groupadd project-team
+
+sudo usermod -aG developers tokyo
+sudo usermod -aG developers,admins berlin
+sudo usermod -aG admins professor
+sudo usermod -aG project-team tokyo
+sudo usermod -aG project-team nairobi
+
+groups tokyo
+groups berlin
+groups professor
+groups nairobi
+
+id tokyo
+id berlin
+id professor
+id nairobi
+
+sudo mkdir -p /opt/dev-project
+sudo mkdir -p /opt/team-workspace
+
+sudo chgrp developers /opt/dev-project
+sudo chgrp project-team /opt/team-workspace
+
+sudo chmod 775 /opt/dev-project
+sudo chmod 775 /opt/team-workspace
+
+sudo -u tokyo touch /opt/dev-project/tokyo.txt
+sudo -u berlin touch /opt/dev-project/berlin.txt
+sudo -u nairobi touch /opt/team-workspace/project.txt
+
+ls -ld /opt/dev-project
+ls -ld /opt/team-workspace
+
+ls -l /opt/dev-project
+ls -l /opt/team-workspace
+```
+
+---
+
+# Verification Checklist
+
+* ✅ Created users: **tokyo**, **berlin**, **professor**, **nairobi**
+* ✅ Created groups: **developers**, **admins**, **project-team**
+* ✅ Assigned users to the required groups
+* ✅ Created shared directories
+* ✅ Applied appropriate directory permissions
+* ✅ Verified that users could create files in shared directories
+
+---
+
+# Key Learnings
+
+### User Management
+
+* `useradd -m` creates a user and its home directory.
+* `passwd` sets or changes a user's password.
+* `/etc/passwd` contains user account information.
+
+### Group Management
+
+* `groupadd` creates a Linux group.
+* `usermod -aG` adds a user to supplementary groups.
+* `groups` and `id` can be used to verify group membership.
+* `/etc/group` contains group information.
+
+### Ownership & Permissions
+
+* `chgrp` changes the group ownership of a file or directory.
+* `chmod 775` gives:
+
+```text
+Owner  → rwx
+Group  → rwx
+Others → r-x
+```
+
+* `sudo -u <user>` is useful for testing commands as another user without switching to that account.
+
+### Shared Workspace
+
+* Group ownership allows multiple users to collaborate on shared directories.
+* `chmod 2775` can be used on team directories when group inheritance is desired.
+
+---
+
+# Real-World Linux Administration Connection
+
+A common shared-project setup looks like:
+
+```text
+                /opt/project
+                     |
+              Group: developers
+                     |
+        +------------+------------+
+        |            |            |
+      User A       User B       User C
+        |            |            |
+        +------------+------------+
+                     |
+             Shared Files
+```
+
+This approach allows multiple users to collaborate while controlling who can access the files.
+
+---
+
+# Troubleshooting Scenario
+
+### Problem
+
+A user receives:
+
+```text
+Permission denied
+```
+
+### Investigation
+
+First check:
+
+```bash
+ls -ld /opt/dev-project
+```
+
+Then check the user's groups:
+
+```bash
+id <username>
+```
+
+Then verify ownership and permissions:
+
+```bash
+ls -l /opt/dev-project
+```
+
+If the user was recently added to a group, the user's existing login session may not yet reflect the new supplementary group membership. Logging out and back in, or starting a new session, may be required.
+
+---
+
+# Conclusion
+
+This exercise demonstrated how Linux manages **users, groups, ownership, and permissions**.
+
+I practiced creating users and groups, assigning users to supplementary groups, configuring shared directories, and verifying access through real file-creation tests.
+
+### Final Understanding
+
+```text
+User
+  ↓
+Group Membership
+  ↓
+Directory Ownership
+  ↓
+Permissions
+  ↓
+Controlled Access
+```
+
+> **Linux user and group management provides the foundation for secure access control and collaboration in Linux and DevOps environments.**
+
