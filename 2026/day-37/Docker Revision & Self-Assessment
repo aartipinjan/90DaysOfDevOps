@@ -1,0 +1,1177 @@
+# 🐳 Day 37 – Docker Revision & Self-Assessment
+
+## 🎯 Objective
+
+Revise and consolidate the Docker concepts learned during **Days 29–36** and identify areas that need additional hands-on practice.
+
+### Learning Goals
+
+By the end of Day 37, I should be able to:
+
+* Manage Docker containers and images
+* Write and understand Dockerfiles
+* Understand image layers and build cache
+* Work with volumes and bind mounts
+* Configure Docker networks
+* Understand container-to-container communication
+* Use Docker Compose
+* Configure environment variables
+* Understand multi-stage builds
+* Push images to Docker Hub
+* Configure healthchecks
+* Understand `depends_on`
+* Troubleshoot common Docker issues
+
+---
+
+# 1. 📋 Self-Assessment Checklist
+
+| Topic                            | Status   | Current Understanding                      |
+| -------------------------------- | -------- | ------------------------------------------ |
+| Run a container from Docker Hub  | ✅ Can do | Comfortable with `docker run`              |
+| List, stop and remove containers | ✅ Can do | Know `ps`, `stop`, `rm`                    |
+| Remove images                    | ✅ Can do | Know `docker rmi`                          |
+| Explain image layers             | 🟡 Shaky | Need more practice with caching            |
+| Explain Docker build cache       | 🟡 Shaky | Understand the basic concept               |
+| Write a Dockerfile               | ✅ Can do | Comfortable with basic instructions        |
+| CMD vs ENTRYPOINT                | 🟡 Shaky | Need more real-world examples              |
+| Build and tag an image           | ✅ Can do | Know `docker build` and `docker tag`       |
+| Named volumes                    | 🟡 Shaky | Understand persistence but need practice   |
+| Bind mounts                      | 🟡 Shaky | Understand host-to-container mapping       |
+| Docker networks                  | 🟡 Shaky | Need more container communication practice |
+| Docker Compose                   | ✅ Can do | Practiced multi-container applications     |
+| Environment variables            | 🟡 Shaky | Understand `.env` basics                   |
+| Multi-stage Dockerfile           | 🟡 Shaky | Understand the concept                     |
+| Push image to Docker Hub         | 🟡 Shaky | Know the workflow                          |
+| Healthchecks                     | 🟡 Shaky | Need hands-on practice                     |
+| `depends_on`                     | 🟡 Shaky | Understand service dependency              |
+
+---
+
+# 2. ⚡ Quick-Fire Questions
+
+## Q1. What is the difference between an Image and a Container?
+
+### Answer
+
+A **Docker image** is a read-only template used to create containers.
+
+A **Docker container** is a running or stopped instance created from an image.
+
+```text
+              Docker Image
+                   │
+        ┌──────────┼──────────┐
+        ↓          ↓          ↓
+   Container 1  Container 2  Container 3
+```
+
+### Remember
+
+> **Image = Template**
+> **Container = Instance**
+
+---
+
+# 3. 💾 What Happens to Data When a Container Is Removed?
+
+Data stored only inside the container's writable filesystem is normally lost when the container is removed.
+
+For persistent data, use:
+
+* Docker Volume
+* Bind Mount
+
+### Example – Named Volume
+
+```bash
+docker run -v my-data:/data nginx
+```
+
+The data stored in `my-data` can survive container removal.
+
+```text
+Container
+    │
+    ↓
+Docker Volume
+    │
+    ↓
+Persistent Data
+```
+
+---
+
+# 4. 🌐 Docker Container Networking
+
+Containers connected to the same custom Docker network can communicate using their **container name** or **Compose service name**.
+
+Example:
+
+```text
+backend → db:3306
+```
+
+If the MySQL service is called `db`:
+
+```text
+db:3306
+```
+
+should be used.
+
+### ❌ Incorrect
+
+```text
+localhost:3306
+```
+
+### Why?
+
+Inside the backend container:
+
+```text
+localhost
+    ↓
+Backend container itself
+```
+
+It does **not** refer to the MySQL container.
+
+### Correct Architecture
+
+```text
+┌──────────────┐
+│   Backend    │
+│              │
+└──────┬───────┘
+       │
+       │ db:3306
+       ↓
+┌──────────────┐
+│     MySQL    │
+│      db      │
+└──────────────┘
+```
+
+---
+
+# 5. 🗑️ `docker compose down` vs `docker compose down -v`
+
+### Normal shutdown
+
+```bash
+docker compose down
+```
+
+Removes:
+
+* Containers
+* Compose network
+
+### With `-v`
+
+```bash
+docker compose down -v
+```
+
+Removes:
+
+* Containers
+* Networks
+* Compose-managed volumes
+
+### ⚠️ Important
+
+Be careful with:
+
+```bash
+docker compose down -v
+```
+
+If a database uses a Docker volume, removing the volume can remove the persistent database data.
+
+---
+
+# 6. 🏗️ Multi-Stage Docker Builds
+
+Multi-stage builds separate the **build environment** from the **runtime environment**.
+
+```text
+Builder Image
+      │
+      ↓
+Compile Application
+      │
+      ↓
+Final Application
+      │
+      ↓
+Small Runtime Image
+```
+
+### Benefits
+
+* Smaller images
+* Faster deployments
+* Fewer unnecessary packages
+* Reduced attack surface
+* Cleaner production containers
+
+---
+
+# 7. 📦 COPY vs ADD
+
+Both instructions can copy files into a Docker image.
+
+## COPY
+
+Preferred for normal file copying.
+
+```dockerfile
+COPY app.py /app/
+```
+
+## ADD
+
+Provides additional functionality, such as extracting local tar archives.
+
+```dockerfile
+ADD app.tar.gz /app/
+```
+
+### Best Practice
+
+For normal application files:
+
+```dockerfile
+COPY
+```
+
+> **Use `COPY` unless you specifically need an `ADD` feature.**
+
+---
+
+# 8. 🔌 Docker Port Mapping
+
+Consider:
+
+```bash
+docker run -p 8080:80 nginx
+```
+
+Format:
+
+```text
+-p HOST_PORT:CONTAINER_PORT
+```
+
+Therefore:
+
+```text
+Host
+Port 8080
+    │
+    ↓
+Container
+Port 80
+```
+
+The application can be accessed through:
+
+```text
+localhost:8080
+```
+
+while Nginx listens on:
+
+```text
+Container:80
+```
+
+### ⚠️ Important
+
+`EXPOSE` does **not** publish a port.
+
+For example:
+
+```dockerfile
+EXPOSE 5000
+```
+
+documents that the application uses port `5000`.
+
+You still need:
+
+```bash
+docker run -p 5000:5000 my-app
+```
+
+to publish it.
+
+---
+
+# 9. 💽 Check Docker Disk Usage
+
+Use:
+
+```bash
+docker system df
+```
+
+It shows Docker disk usage for:
+
+* Images
+* Containers
+* Local volumes
+* Build cache
+
+Example:
+
+```bash
+docker system df
+```
+
+---
+
+# 10. 🐳 Important Docker Concepts
+
+## Docker Image
+
+An image contains everything required to run an application.
+
+```text
+Application
+     +
+Dependencies
+     +
+Libraries
+     +
+Configuration
+     +
+Base Image
+     ↓
+Docker Image
+```
+
+---
+
+## Docker Container
+
+A container is an isolated runtime environment created from an image.
+
+```text
+Docker Image
+     ↓
+Docker Container
+     ↓
+Application Running
+```
+
+---
+
+## Docker Volume
+
+A volume provides persistent storage outside the container's writable filesystem.
+
+```text
+Container
+     │
+     ↓
+Docker Volume
+     │
+     ↓
+Persistent Data
+```
+
+Commonly used for:
+
+* MySQL
+* PostgreSQL
+* Redis
+* Application data
+
+---
+
+## Docker Network
+
+A Docker network allows containers to communicate.
+
+```text
+             Docker Network
+                  │
+        ┌─────────┴─────────┐
+        ↓                   ↓
+     Backend              Database
+        │                   │
+        └─────── db ────────┘
+```
+
+---
+
+# 11. 📝 Dockerfile Example
+
+Example Python application:
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+EXPOSE 5000
+
+CMD ["python", "app.py"]
+```
+
+### Dockerfile Instructions
+
+| Instruction | Purpose                              |
+| ----------- | ------------------------------------ |
+| `FROM`      | Selects the base image               |
+| `WORKDIR`   | Sets the working directory           |
+| `COPY`      | Copies files into the image          |
+| `RUN`       | Executes commands during image build |
+| `EXPOSE`    | Documents the application port       |
+| `CMD`       | Defines the default startup command  |
+
+### Build Flow
+
+```text
+FROM
+ ↓
+WORKDIR
+ ↓
+COPY
+ ↓
+RUN
+ ↓
+COPY
+ ↓
+EXPOSE
+ ↓
+CMD
+```
+
+---
+
+# 12. 🔄 Docker Image Layers
+
+Docker images are built using multiple layers.
+
+For example:
+
+```dockerfile
+FROM python:3.12-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["python", "app.py"]
+```
+
+Conceptually:
+
+```text
+┌─────────────────────────┐
+│ CMD                     │
+├─────────────────────────┤
+│ COPY application        │
+├─────────────────────────┤
+│ RUN pip install         │
+├─────────────────────────┤
+│ COPY requirements.txt   │
+├─────────────────────────┤
+│ WORKDIR                 │
+├─────────────────────────┤
+│ Python Base Image       │
+└─────────────────────────┘
+```
+
+Docker can reuse unchanged layers during subsequent builds.
+
+This is called **build cache**.
+
+---
+
+# 13. ⚡ Docker Build Cache
+
+Suppose we have:
+
+```dockerfile
+COPY requirements.txt .
+
+RUN pip install -r requirements.txt
+
+COPY . .
+```
+
+If only application code changes:
+
+```text
+requirements.txt
+       ↓
+unchanged
+       ↓
+pip install layer
+       ↓
+CACHE USED
+       ↓
+application layer rebuilt
+```
+
+This makes builds faster.
+
+### Best Practice
+
+Place instructions that change less frequently before instructions that change frequently.
+
+---
+
+# 14. 🚀 Docker Compose Example
+
+A simple backend + MySQL application:
+
+```yaml
+services:
+
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: appdb
+
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mysql-data:
+```
+
+### Architecture
+
+```text
+                    Docker Host
+                         │
+              ┌──────────┴──────────┐
+              │                     │
+              ↓                     ↓
+         ┌─────────┐          ┌─────────┐
+         │ Backend │          │  MySQL  │
+         │ :5000   │          │  :3306  │
+         └────┬────┘          └────┬────┘
+              │                    │
+              └────── Network ─────┘
+                         │
+                         ↓
+                   mysql-data
+                      Volume
+```
+
+---
+
+# 15. ❤️ Healthcheck
+
+A healthcheck determines whether a containerized service is functioning correctly.
+
+Example:
+
+```yaml
+healthcheck:
+  test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+  interval: 10s
+  timeout: 5s
+  retries: 5
+```
+
+### Concept
+
+```text
+Container Started
+       ↓
+Healthcheck
+       ↓
+Healthy / Unhealthy
+```
+
+This is particularly useful for databases and dependent services.
+
+---
+
+# 16. 🔗 `depends_on`
+
+`depends_on` defines a startup dependency between Compose services.
+
+Example:
+
+```yaml
+depends_on:
+  db:
+    condition: service_healthy
+```
+
+This tells Compose that the backend depends on the database being healthy.
+
+### Important
+
+Basic:
+
+```yaml
+depends_on:
+  - db
+```
+
+does not necessarily mean the database is **ready to accept connections**.
+
+Using:
+
+```yaml
+condition: service_healthy
+```
+
+with a healthcheck provides a stronger readiness dependency.
+
+---
+
+# 17. 🏗️ Multi-Stage Dockerfile
+
+Example using Go:
+
+```dockerfile
+FROM golang:1.25 AS builder
+
+WORKDIR /app
+
+COPY . .
+
+RUN go build -o app
+
+
+FROM debian:bookworm-slim
+
+WORKDIR /app
+
+COPY --from=builder /app/app .
+
+CMD ["./app"]
+```
+
+### Architecture
+
+```text
+Stage 1 – Builder
+─────────────────
+Go Compiler
+Build Tools
+Source Code
+     │
+     ↓
+Build Application
+     │
+     ↓
+     └──────────────┐
+                    ↓
+Stage 2 – Runtime
+──────────────────
+Small Runtime Image
+Application Binary
+```
+
+### Main Benefit
+
+The final image does not need to contain the compiler and other build tools.
+
+---
+
+# 18. 🔄 Practical Docker Workflow
+
+The typical Docker workflow is:
+
+```text
+Write Application
+       ↓
+Create Dockerfile
+       ↓
+Build Image
+       ↓
+Run Container
+       ↓
+Test Application
+       ↓
+Check Logs
+       ↓
+Troubleshoot
+       ↓
+Tag Image
+       ↓
+Push to Registry
+       ↓
+Deploy
+```
+
+### Commands
+
+```bash
+docker build -t my-app:v1 .
+```
+
+```bash
+docker run -d -p 8080:80 --name my-container my-app:v1
+```
+
+```bash
+docker ps
+```
+
+```bash
+docker logs my-container
+```
+
+```bash
+docker tag my-app:v1 username/my-app:v1
+```
+
+```bash
+docker push username/my-app:v1
+```
+
+---
+
+# 19. 🌐 Practical Lab – Docker Networking
+
+## Step 1: Create a Network
+
+```bash
+docker network create app-network
+```
+
+## Step 2: Start Nginx
+
+```bash
+docker run -d \
+  --name web \
+  --network app-network \
+  nginx
+```
+
+## Step 3: Start Test Container
+
+```bash
+docker run -it \
+  --name test \
+  --network app-network \
+  busybox
+```
+
+## Step 4: Test Communication
+
+Inside the `test` container:
+
+```bash
+ping web
+```
+
+### Key Concept
+
+```text
+Same Custom Network
+        ↓
+Containers Can Communicate
+        ↓
+Use Container/Service Name
+```
+
+---
+
+# 20. 💾 Practical Lab – Docker Volumes
+
+## Step 1: Create Volume
+
+```bash
+docker volume create test-volume
+```
+
+## Step 2: Run Container
+
+```bash
+docker run -it \
+  --name volume-test \
+  -v test-volume:/data \
+  ubuntu bash
+```
+
+## Step 3: Create Data
+
+Inside the container:
+
+```bash
+echo "Docker persistent data" > /data/test.txt
+```
+
+## Step 4: Exit
+
+```bash
+exit
+```
+
+## Step 5: Remove Container
+
+```bash
+docker rm volume-test
+```
+
+## Step 6: Create Another Container
+
+```bash
+docker run -it \
+  -v test-volume:/data \
+  ubuntu bash
+```
+
+## Step 7: Verify Data
+
+```bash
+cat /data/test.txt
+```
+
+Expected result:
+
+```text
+Docker persistent data
+```
+
+### Why?
+
+The data was stored in:
+
+```text
+Docker Volume
+     ↓
+test-volume
+     ↓
+/data/test.txt
+```
+
+The container was removed, but the volume remained.
+
+---
+
+# 21. 📂 Volume vs Bind Mount
+
+| Feature              | Docker Volume  | Bind Mount              |
+| -------------------- | -------------- | ----------------------- |
+| Managed by Docker    | ✅ Yes          | ❌ No                    |
+| Storage location     | Docker-managed | User-selected host path |
+| Good for databases   | ✅ Yes          | Possible                |
+| Good for development | Possible       | ✅ Excellent             |
+| Example              | `mydata:/data` | `./app:/app`            |
+
+### Volume
+
+```bash
+-v mydata:/data
+```
+
+### Bind Mount
+
+```bash
+-v $(pwd)/app:/app
+```
+
+### Easy Interview Answer
+
+> **Volume is managed by Docker, while a bind mount maps a specific host filesystem path into the container.**
+
+---
+
+# 22. 🎯 CMD vs ENTRYPOINT
+
+This is one of your important weak areas.
+
+## CMD
+
+Provides the default command or arguments.
+
+```dockerfile
+CMD ["python", "app.py"]
+```
+
+It can easily be overridden when running the container.
+
+## ENTRYPOINT
+
+Defines the main executable of the container.
+
+```dockerfile
+ENTRYPOINT ["python"]
+```
+
+Then:
+
+```bash
+docker run my-image app.py
+```
+
+effectively runs:
+
+```text
+python app.py
+```
+
+### Simple Interview Explanation
+
+> **ENTRYPOINT defines what the container primarily runs, while CMD provides default arguments or a default command that can be overridden.**
+
+---
+
+# 23. 📋 Important Docker Commands
+
+## Containers
+
+```bash
+docker ps
+docker ps -a
+docker run
+docker start
+docker stop
+docker restart
+docker rm
+docker exec
+docker logs
+docker inspect
+```
+
+## Images
+
+```bash
+docker images
+docker pull
+docker build
+docker tag
+docker rmi
+docker push
+```
+
+## Volumes
+
+```bash
+docker volume ls
+docker volume create
+docker volume inspect
+docker volume rm
+```
+
+## Networks
+
+```bash
+docker network ls
+docker network create
+docker network inspect
+docker network connect
+docker network disconnect
+```
+
+## Compose
+
+```bash
+docker compose up -d
+docker compose down
+docker compose down -v
+docker compose ps
+docker compose logs -f
+```
+
+## Troubleshooting
+
+```bash
+docker logs container
+docker inspect container
+docker stats
+docker system df
+docker system prune
+```
+
+---
+
+# 24. 🎤 Docker Interview Questions
+
+Before moving forward, I should be able to answer these without looking at my notes:
+
+1. What is the difference between a Docker image and container?
+2. What are Docker image layers?
+3. How does Docker build cache work?
+4. What is the difference between a volume and a bind mount?
+5. How do two containers communicate?
+6. Why doesn't `localhost` normally work for communication between two containers?
+7. What is the difference between `CMD` and `ENTRYPOINT`?
+8. What does `-p 8080:80` mean?
+9. What is the purpose of `EXPOSE`?
+10. What happens when a container is removed?
+11. Why are volumes important for databases?
+12. What does `docker compose down -v` do?
+13. What is a Docker healthcheck?
+14. What is `depends_on`?
+15. Why are multi-stage builds useful?
+16. What is the difference between `COPY` and `ADD`?
+17. How do you check Docker disk usage?
+18. How do you troubleshoot a container that exits immediately?
+19. How do you troubleshoot container-to-container connectivity?
+20. How do you push an image to Docker Hub?
+
+---
+
+# 25. 🔴 Weak Areas to Practice
+
+Based on my self-assessment, I should spend additional hands-on time on:
+
+### Priority 1 – Networking
+
+Practice:
+
+```bash
+docker network create
+docker network inspect
+docker run --network
+```
+
+Understand:
+
+```text
+Network
+   ↓
+Container communication
+   ↓
+Container/Service name
+   ↓
+Port
+```
+
+### Priority 2 – Volumes
+
+Practice:
+
+```bash
+docker volume create
+docker volume ls
+docker volume inspect
+```
+
+Understand:
+
+```text
+Container
+    ↓
+Volume
+    ↓
+Persistent Data
+```
+
+### Priority 3 – CMD vs ENTRYPOINT
+
+Practice overriding:
+
+```bash
+docker run image command
+```
+
+and understand how `CMD` and `ENTRYPOINT` behave together.
+
+---
+
+# 26. 🏆 Day-37 Learning Outcome
+
+After completing this revision, I should be able to:
+
+* ✅ Run and manage Docker containers
+* ✅ Build custom Docker images
+* ✅ Write a basic Dockerfile
+* 🟡 Explain Docker image layers and caching
+* 🟡 Use volumes for persistent storage
+* 🟡 Use bind mounts during development
+* 🟡 Create Docker networks
+* 🟡 Understand container-to-container communication
+* ✅ Create multi-container applications using Docker Compose
+* 🟡 Use environment variables in Compose
+* 🟡 Create multi-stage Dockerfiles
+* 🟡 Push images to Docker Hub
+* 🟡 Configure healthchecks
+* 🟡 Understand `depends_on`
+* 🟡 Troubleshoot Docker issues using `logs`, `inspect`, `stats`, and disk-usage commands
+
+---
+
+# 📌 Day-37 Final Summary
+
+```text
+Docker
+│
+├── Image
+│   └── Read-only template
+│
+├── Container
+│   └── Runtime instance
+│
+├── Dockerfile
+│   └── Image build instructions
+│
+├── Volume
+│   └── Persistent storage
+│
+├── Bind Mount
+│   └── Host ↔ Container filesystem
+│
+├── Network
+│   └── Container communication
+│
+├── Compose
+│   └── Multi-container applications
+│
+├── Multi-stage Build
+│   └── Smaller production images
+│
+├── Healthcheck
+│   └── Service health verification
+│
+└── Docker Hub
+    └── Image registry
+```
+
+## 🚀 Day-37 Status
+
+> **Docker fundamentals revised and consolidated. 🐳**
+
+### Next Focus
+
+**Docker Networking → Volumes → CMD vs ENTRYPOINT → Image Layers & Cache → Healthchecks → Docker Compose troubleshooting → DevOps-level Docker practice**
+
+This is a good point to move from **“I know the Docker commands”** toward **“I can troubleshoot Docker in a real DevOps environment.”**
